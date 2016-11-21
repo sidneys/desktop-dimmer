@@ -1,0 +1,149 @@
+<html>
+<head>
+    <title>Controller</title>
+    <style>
+        body {
+            padding: 0.8rem;
+            overflow: hidden;
+        }
+
+        #alpha-input-id {
+            width: 100%;
+            background-color: white;
+      
+        
+        }
+    
+        #alpha-output-id {
+            margin: 0;
+            font-family: 'Roboto';
+            color: white;
+            font-weight: 200;
+            text-align: right;
+            float: right;
+            font-size: 0.8rem;
+            line-height: 1.8rem;
+            -webkit-font-smoothing: subpixel-antialiased;
+         }
+     
+        input[type=range]{
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 0.25rem;
+            background: rgb(200, 200, 200);
+            border: none;
+            border-radius: 0;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            background: rgb(255, 255, 255);
+            -webkit-appearance: none;
+            border: none;
+            height: 0.8rem;
+            width: 0.8rem;
+            border-radius: 50%;
+            margin-top: -0.25rem;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <label for="alpha-input-id"></label>
+    <input name="alphaInputName" id="alpha-input-id" type="range" min="0" max="0.90" value="0" step="0.05" oninput="onAlphaChange(value)">
+    <output name="alphaOutputName" id="alpha-output-id" for="alpha-fader">0</output>
+
+    <script>
+        'use strict';
+
+        /**
+         * Modules
+         * Electron
+         * @global
+         * @constant
+         */
+        const electron = require('electron');
+        const { ipcRenderer, remote } = electron;
+
+        /**
+         * DOM Elements
+         * @global
+         */
+        let dom = {
+            container: document.querySelector('body'),
+            output: {
+                alpha: document.querySelector('#alpha-output-id'),
+                color: document.querySelector('#color-output-id'),
+                displayId: document.querySelector('#value-displayid'),
+            },
+            input: {
+                alpha: document.querySelector('#alpha-input-id'),
+                color: document.querySelector('#color-input-id'),
+            }
+        };
+
+        /**
+         * Get the unique identifier for the Display where Controller was opened
+         * @returns {String} - Unique display identifier
+         */
+        let getActiveDisplayId = () => {
+            let mouseLocation = electron.screen.getCursorScreenPoint();
+            let activeDisplay = electron.screen.getDisplayNearestPoint(mouseLocation);
+            return activeDisplay['id'];
+        };
+
+        /**
+         * @listens Electron:ipcRenderer#controller-show
+         */
+        ipcRenderer.on('controller-show', () => {
+            dom.container.style.visibility = 'visible';
+
+            let displayId = getActiveDisplayId(),
+                overlays = remote.getGlobal('overlays'),
+                overlay = overlays[displayId];
+
+            if (overlay) {
+                dom.input.alpha.value = overlay.alpha;
+                dom.output.alpha.value = parseInt(100 * overlay.alpha) + ' %';
+            }
+        });
+
+        /**
+         * @listens Electron:ipcRenderer#controller-hide
+         */
+        ipcRenderer.on('controller-hide', () => {
+            dom.container.style.visibility = 'hidden';
+        });
+
+        /**
+         * Slider Movement
+         */
+        window.onAlphaChange = function(value) {
+            dom.output.alpha.value = parseInt(100 * dom.input.alpha.value) + ' %';
+
+            let overlay = remote.getGlobal('overlays')[getActiveDisplayId()];
+
+            if (overlay) {
+                overlay.setAlpha(value);
+            }
+        };
+
+        /**
+         * @listens body:mouseleave
+         */
+        dom.container.addEventListener('mouseleave', function() {
+            let timeout = setTimeout(function() {
+                ipcRenderer.send('mouse', 'controller', 'leave');
+                clearTimeout(timeout);
+            }, 200);
+        }, false);
+    </script>
+</body>
+</html>
