@@ -1,7 +1,7 @@
 matrix:
   include:
     - os: osx
-      osx_image: xcode8
+      osx_image: xcode8.2
       sudo: required
     - os: linux
       dist: trusty
@@ -26,8 +26,8 @@ cache:
 before_install:
   - curl -o- https://raw.githubusercontent.com/creationix/nvm/master/install.sh | NVM_DIR=$HOME/.nvm sh
   - source $HOME/.nvm/nvm.sh
-  - nvm install 6.6.0
-  - nvm use 6.6.0
+  - nvm install 7.2.1
+  - nvm use 7.2.1
 
 install:
   - npm install
@@ -44,7 +44,7 @@ after_success:
 notifications:
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/24d905038aa07dda37df
+      - https://webhooks.gitter.im/e/a1a9de50af1c703bfe6c
     on_success: change
     on_failure: always
     on_start: never

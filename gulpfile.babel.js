@@ -17,6 +17,7 @@ const path = require('path');
  */
 const gulp = require('gulp');
 const electron = require('electron');
+const appRootPath = require('app-root-path').path;
 const electronConnect = require('electron-connect');
 
 /**
@@ -38,7 +39,7 @@ let appMain = path.join(appRootPath, packageJson.main);
  * Electron Connect
  * @global
  */
-let electronConnectServer = electronConnect.server.create({
+let electronConnectServer = electronConnect.server.add({
     electron: electron,
     path: appMain,
     useGlobalElectron: false,
@@ -54,19 +55,16 @@ let electronConnectServer = electronConnect.server.create({
  */
 let appSources = {
     main: [
-        path.join(appRootPath, 'app', 'main.js'),
-        path.join(appRootPath, 'icons', '**', '*.*')
-    ],
-    renderer: [
-        path.join(appRootPath, 'app', 'views', '*.*'),
-        path.join(appRootPath, 'app', 'scripts', '*.*'),
+        path.join(appRootPath, 'app', 'scripts', '**', '*.*'),
+        path.join(appRootPath, 'app', 'html', '*.*'),
+        path.join(appRootPath, 'icons', '**', '*.*'),
         path.join(appRootPath, 'app', 'styles', '*.*'),
-        path.join(appRootPath, 'app', 'images', '**'),
         path.join(appRootPath, 'app', 'fonts', '*.*')
-    ]
+    ],
+    renderer: []
 };
 
-
+          console.log(appSources)
 /**
  * Task
  * Start Livereload Server

@@ -6,6 +6,7 @@
  * @global
  * @constant
  */
+const os = require('os');
 const path = require('path');
 const url = require('url');
 const util = require('util');
@@ -17,7 +18,15 @@ const util = require('util');
  * @constant
  */
 const electron = require('electron');
-const { BrowserWindow, ipcMain } = electron;
+const { app, ipcMain } = electron;
+
+/**
+ * Chrome Commandline Switches
+ */
+if ((os.platform() === 'linux')) {
+    app.commandLine.appendSwitch('enable-transparent-visuals');
+    app.commandLine.appendSwitch('disable-gpu');
+}
 
 /**
  * Modules
@@ -28,6 +37,7 @@ const { BrowserWindow, ipcMain } = electron;
 const menubar = require('menubar');
 const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
+const electronConnect = require('electron-connect');
 
 /**
  * Modules
@@ -36,27 +46,35 @@ const electronSettings = require('electron-settings');
  * @constant
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
+const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
+const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager'));
+const trayMenu = require(path.join(appRootPath, 'app', 'scripts', 'menus', 'tray-menu'));
+const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'preferences-window'));
 
 /**
  * URLS
  * @global
  */
-let controllerUrl = url.format({
-        protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'controller.html')
-    }),
-    overlayUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'overlay.html') });
+const controllerUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'controller.html') });
+
+/**
+ * Debug Mode
+ * @global
+ */
+const liveReload = global.liveReload = (process.env.NODE_ENV === 'livereload');
+const devMode = global.devMode = ((process.env.NODE_ENV === 'dev') || liveReload);
 
 /**
  * App
  * @global
  */
-let appVersion = packageJson.version;
+const appVersion = packageJson.version;
 
 /**
- * Create reference for Overlays
+ * Paths
  * @global
  */
-let overlays = global.overlays = {};
+const appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, 'icon-tray-enabled' + platformHelper.templateImageExtension(platformHelper.name));
 
 /**
  * Create reference for App Menubar Controller (Menubar)
@@ -64,114 +82,24 @@ let overlays = global.overlays = {};
  * @constant
  */
 const appMenubar = menubar({
-    width: 300,
+    width: 256,
+    minWidth: 256,
+    maxWidth: 256,
+    height: 48,
+    minHeight: 48,
     preloadWindow: true,
-    height: 60,
+    icon: appTrayIconEnabled,
     index: controllerUrl,
-    alwaysOnTop: false
+    alwaysOnTop: devMode === true,
+    backgroundColor: platformHelper.isMacOS ? null : '#404040',
+    vibrancy: 'dark',
+    hasShadow: false
 });
 
 /**
- * Dimmer Overlay
- * @class
- * @constant
+ * Init Settings
  */
-class Overlay extends BrowserWindow {
-    constructor(display) {
-        super({
-            show: false,
-            transparent: true,
-            enableLargerThanScreen: true,
-            frame: false,
-            focusable: false
-        });
-        this.setAlwaysOnTop(true, 'screen-saver');
-        this.setIgnoreMouseEvents(true);
-        this.setBounds({
-            x: display.bounds.x,
-            y: display.bounds.y,
-            width: display.bounds.width,
-            height: display.bounds.height,
-        }, true);
-
-        // Add Display Id reference to every Overlay Window
-        this.displayId = display.id;
-        this.alpha = 0.0;
-        this.color = 'rgba(0, 0, 0)';
-
-        this.loadURL(overlayUrl);
-
-        /** @listens mainPage:dom-ready */
-        this.webContents.on('dom-ready', () => {
-            this.show();
-
-            electronSettings.get('internal.overlays').then((savedOverlays) => {
-                if (savedOverlays[this.displayId]) {
-                    this.setAlpha(savedOverlays[this.displayId].alpha);
-                    this.setColor(savedOverlays[this.displayId].color);
-                }
-            });
-
-            // DEBUG
-            // this.webContents.openDevTools();
-        });
-    }
-
-    setAlpha = function(value) {
-        this.alpha = parseFloat(value);
-        this.webContents.send('overlay-update', this.displayId, 'alpha', value);
-    };
-
-    setColor = function(value) {
-        this.color = value;
-        this.webContents.send('overlay-update', this.displayId, 'color', value);
-    };
-}
-
-/**
- * Creates Overlay windows for all screens
- */
-let createOverlays = () => {
-    electron.screen.getAllDisplays().forEach(function(display) {
-        overlays[display.id] = new Overlay(display);
-    });
-};
-
-
-/**
- * Save Overlay Settings for each Display
- */
-let persistOverlaySettings = () => {
-    let savedOverlays = electronSettings.getSync('internal.overlays');
-
-    for (let i in overlays) {
-        savedOverlays[overlays[i].displayId] = {
-            alpha: overlays[i].alpha,
-            color: overlays[i].color
-        };
-    }
-    electronSettings.setSync('internal.overlays', savedOverlays);
-};
-
-
-/**
- * Settings Defaults
- * @property {String} internal.currentVersion - Application Version
- * @property {Object} internal.overlays - Hashmap
- * @property {Number} display.id- Play Notification Sound
- * @property {Number} display.alpha - Autostart
- * @property {String} display.color - Show recent pushes
- */
-let settingsDefaults = {
-    internal: {
-        currentVersion: appVersion,
-        overlays: {}
-    }
-};
-
-
-/** @listens appMenubar.app#before-quit */
-appMenubar.app.on('ready', () => {
+let initializeSettings = () => {
     // Settings Defaults
     electronSettings.defaults(settingsDefaults);
     electronSettings.applyDefaultsSync();
@@ -185,28 +113,59 @@ appMenubar.app.on('ready', () => {
         atomicSaving: true
     });
 
-     appMenubar.window.setVibrancy('dark');
-});
+    console.log('Initialized Settings Database', electronSettings.getSettingsFilePath());
+    console.log(util.inspect(electronSettings.getSync(), true, null, true));
+};
 
-/** @listens appMenubar#before-quit */
-appMenubar.app.on('before-quit', () => {
-    persistOverlaySettings();
-});
+/**
+ * Settings Defaults
+ * @property {String} internal.currentVersion - Application Version
+ * @property {Object} internal.overlays - Hashmap
+ * @property {Number} display.id- Play Notification Sound
+ * @property {Number} display.alpha - Autostart
+ * @property {String} display.color - Show recent pushes
+ */
+let settingsDefaults = {
+    internal: {
+        currentVersion: appVersion,
+        overlays: {}
+    },
+    user: {
+        launchOnStartup: false
+    }
+};
 
-/** @listens appMenubar#quit */
-appMenubar.app.on('quit', () => {
-    console.log('Settings', 'File', electronSettings.getSettingsFilePath());
-    console.log('Settings', 'Content', util.inspect(electronSettings.getSync(), true, null, true));
+
+/**
+ * @listens app#quit
+ */
+app.on('quit', () => {
+    console.log('Updated Settings', util.inspect(electronSettings.getSync(), true, null, true));
 });
 
 /**
- * @listens appMenubar#ready
+ * @listens app#ready
  */
-appMenubar.on('ready', () => {
-    createOverlays();
+app.on('ready', () => {
+    global.appMenubar = appMenubar;
+
+    initializeSettings();
+    overlayManager.create();
+    //preferencesWindow.create();
+
+    if (platformHelper.isLinux) {
+        trayMenu.add(appMenubar.tray);
+    }
 
     // DEBUG
-    appMenubar.window.webContents.openDevTools();
+    if (devMode) {
+        appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+    }
+    if (liveReload) {
+        appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+        const electronConnectClient = electronConnect.client;
+        electronConnectClient.add();
+    }
 });
 
 /**
@@ -223,21 +182,9 @@ appMenubar.on('show', () => {
     appMenubar.window.webContents.send('controller-show');
 });
 
-
 /**
  * @listens ipcMain#log
  */
 ipcMain.on('log', (event, message) => {
     console.log(message);
 });
-
-/**
- * @listens ipcMain#mouse
- */
-ipcMain.on('mouse', (ev, view, action) => {
-    if (action === 'leave') {
-        //appMenubar.hideWindow();
-    }
-});
-
-

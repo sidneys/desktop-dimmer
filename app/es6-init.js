@@ -25,22 +25,12 @@ const electronCompile = require('electron-compile');
  */
 let npmScript = process.env['npm_lifecycle_event'];
 
-/**
- * Set DEBUG Environment Variable
- * @global
- */
-if (npmScript === 'debug') {
-    if (!process.env['DEBUG']) { process.env['DEBUG'] = true; }
+if (npmScript && npmScript.includes('dev')) {
+    process.env.NODE_ENV = 'dev';
 }
 
-/**
- * Set LIVERELOAD Environment Variable
- * @global
- */
-if (npmScript === 'livereload') {
-    if (!process.env['DEBUG']) { process.env['DEBUG'] = true; }
-    process.env['livereload'] = true;
+if (npmScript && npmScript.includes('livereload')) {
+    process.env.NODE_ENV = 'livereload';
 }
-
 
 electronCompile.init(appRootPath, './scripts/components/application');

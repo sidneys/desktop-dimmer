@@ -1,0 +1,135 @@
+/* ==========================================================================
+   GLOBAL
+   ========================================================================== */
+
+/* html
+   ========================================================================== */
+
+html, body {
+    font-size: 62.5%;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    -webkit-font-smoothing: subpixel-antialiased;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+
+/* ==========================================================================
+   OVERLAY
+   ========================================================================== */
+
+/* html
+   ========================================================================== */
+
+html .overlay {
+    background-color: transparent;
+}
+
+/* ==========================================================================
+   CONTROLLER
+   ========================================================================== */
+
+/* html
+   ========================================================================== */
+
+html .controller {
+    background-color: transparent;
+}
+
+/* .window-controls
+   ========================================================================== */
+.window-controls {
+    display: block;
+    text-align: right;
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.15);
+}
+
+.window-controls .button {
+    color: rgba(253, 229, 229, 0.6);
+    position: relative;
+    padding: 0 0.2rem;
+    margin: 0;
+    height: 2rem;
+    font-style: normal;
+    line-height: 2rem;
+    font-size: 1.5rem;
+    text-decoration: none;
+}
+
+/* .display-control-list
+   ========================================================================== */
+
+.display-control-list {
+    padding: 0.5rem 1rem 0 1rem;
+    opacity: 0;
+    transition: all 200ms ease-out;
+}
+
+/* .display-control
+   ========================================================================== */
+
+.display-control-list__display-control {
+    margin: 0;
+    height: 3rem;
+}
+
+.display-control-list__display-control:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* .display-control__alpha_slider
+   ========================================================================== */
+
+.display-control-list__display-control input.alpha {
+    position: relative;
+    display: block;
+    float: right;
+    width: 80%;
+    height: 3rem;
+    margin: 0;
+    padding: 0 5% 0 0;
+}
+
+/* .display-control__alpha-label
+   ========================================================================== */
+.display-control-list__display-control output.alpha {
+    color: rgba(255, 255, 255, 1);
+    padding: 0 0 0 5%;
+    width: 15%;
+    margin: 0;
+    line-height: 3rem;
+    text-align: left;
+    float: left;
+    font-size: 1.2rem;
+}
+
+/* input
+   ========================================================================== */
+input[type=range] {
+    -webkit-appearance: none;
+    background: transparent;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 0.25rem;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+    background: rgb(255, 255, 255);
+    -webkit-appearance: none;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    height: 1.2rem;
+    width: 1.2rem;
+    border-radius: 50%;
+    padding: 0.2rem;
+    margin-top: -0.44rem;
+}
+
+input[type=range]:focus {
+    outline: none;
+}
