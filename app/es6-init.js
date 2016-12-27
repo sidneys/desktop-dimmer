@@ -15,22 +15,17 @@ const path = require('path');
  * @global
  * @constant
  */
-const appRootPath = require('app-root-path').path;
+const appRootPath = require('app-root-path');
 const electronCompile = require('electron-compile');
 
 
 /**
- * Get Name of active NPM Script
- *  @global
+ * Set Application Root
  */
-let npmScript = process.env['npm_lifecycle_event'];
+appRootPath.setPath(path.join(__dirname, '..'));
 
-if (npmScript && npmScript.includes('dev')) {
-    process.env.NODE_ENV = 'dev';
-}
 
-if (npmScript && npmScript.includes('livereload')) {
-    process.env.NODE_ENV = 'livereload';
-}
-
-electronCompile.init(appRootPath, './scripts/components/application');
+/**
+ * Init
+ */
+electronCompile.init(appRootPath.path, './scripts/components/application');

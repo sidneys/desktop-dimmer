@@ -45,24 +45,27 @@ const electronConnect = require('electron-connect');
  * @global
  * @constant
  */
+
 const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager'));
 const trayMenu = require(path.join(appRootPath, 'app', 'scripts', 'menus', 'tray-menu'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
+const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+/* jshint ignore:start */
+const screenManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'screen-manager'));
 const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'preferences-window'));
+const updaterService = require(path.join(appRootPath, 'app', 'scripts', 'services', 'updater-service'));
+/* jshint ignore:end */
 
 /**
  * URLS
  * @global
  */
-const controllerUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'controller.html') });
-
-/**
- * Debug Mode
- * @global
- */
-const liveReload = global.liveReload = (process.env.NODE_ENV === 'livereload');
-const devMode = global.devMode = ((process.env.NODE_ENV === 'dev') || liveReload);
+const controllerUrl = url.format({
+    protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'controller.html')
+});
 
 /**
  * App
@@ -90,36 +93,16 @@ const appMenubar = menubar({
     preloadWindow: true,
     icon: appTrayIconEnabled,
     index: controllerUrl,
-    alwaysOnTop: devMode === true,
+    alwaysOnTop: isDebug === true,
     backgroundColor: platformHelper.isMacOS ? null : '#404040',
     vibrancy: 'dark',
     hasShadow: false
 });
 
 /**
- * Init Settings
- */
-let initializeSettings = () => {
-    // Settings Defaults
-    electronSettings.defaults(settingsDefaults);
-    electronSettings.applyDefaultsSync();
-
-    // Update Settings
-    electronSettings.setSync('internal.currentVersion', appVersion);
-
-    // Settings Configuration
-    electronSettings.configure({
-        prettify: true,
-        atomicSaving: true
-    });
-
-    console.log('Initialized Settings Database', electronSettings.getSettingsFilePath());
-    console.log(util.inspect(electronSettings.getSync(), true, null, true));
-};
-
-/**
  * Settings Defaults
  * @property {String} internal.currentVersion - Application Version
+ * @property {Boolean} internal.updatePending - Hashmap
  * @property {Object} internal.overlays - Hashmap
  * @property {Number} display.id- Play Notification Sound
  * @property {Number} display.alpha - Autostart
@@ -135,12 +118,31 @@ let settingsDefaults = {
     }
 };
 
+/**
+ * Init Settings
+ */
+let initializeSettings = () => {
+    // Settings Defaults
+    electronSettings.defaults(settingsDefaults);
+    electronSettings.applyDefaultsSync();
+
+    // Settings Configuration
+    electronSettings.configure({
+        prettify: true,
+        atomicSaving: true
+    });
+
+    logger.log('settings', `settingsFilePath: '${electronSettings.getSettingsFilePath()}'`);
+    logger.debug('settings', util.inspect(electronSettings.getSync()));
+};
+
 
 /**
  * @listens app#quit
  */
 app.on('quit', () => {
-    console.log('Updated Settings', util.inspect(electronSettings.getSync(), true, null, true));
+    logger.log('settings', `settingsFilePath: '${electronSettings.getSettingsFilePath()}'`);
+    logger.debug('settings', util.inspect(electronSettings.getSync()));
 });
 
 /**
@@ -151,20 +153,22 @@ app.on('ready', () => {
 
     initializeSettings();
     overlayManager.create();
-    //preferencesWindow.create();
 
     if (platformHelper.isLinux) {
         trayMenu.add(appMenubar.tray);
     }
 
     // DEBUG
-    if (devMode) {
-        appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+    logger.log('application', 'ready');
+
+    // DEBUG
+    if (isDebug) {
+        appMenubar.window.webContents.openDevTools({ mode: 'detach' });
     }
-    if (liveReload) {
-        appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+    if (isLivereload) {
+        appMenubar.window.webContents.openDevTools({ mode: 'detach' });
         const electronConnectClient = electronConnect.client;
-        electronConnectClient.add();
+        electronConnectClient.create();
     }
 });
 
@@ -186,5 +190,5 @@ appMenubar.on('show', () => {
  * @listens ipcMain#log
  */
 ipcMain.on('log', (event, message) => {
-    console.log(message);
+    logger.log('renderer', message);
 });

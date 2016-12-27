@@ -7,8 +7,6 @@
  * @constant
  */
 const path = require('path');
-const url = require('url');
-const util = require('util');
 
 /**
  * Modules
@@ -17,7 +15,7 @@ const util = require('util');
  * @constant
  */
 const electron = require('electron');
-const { app, Menu } = electron;
+const { Menu } = electron;
 
 /**
  * Modules
@@ -35,7 +33,6 @@ const appRootPath = require('app-root-path').path;
  * @constant
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
-const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 
 /**
  * App
@@ -58,14 +55,14 @@ let trayMenuTemplate = [
         label: 'Show',
         enabled: true,
         click() {
-            appMenubar.window.show();
+            global.appMenubar.window.show();
         }
     },
     {
         label: 'Quit',
         enabled: true,
         click() {
-            appMenubar.app.quit();
+            global.appMenubar.app.quit();
         }
     }
 ];

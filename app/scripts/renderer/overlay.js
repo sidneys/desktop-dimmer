@@ -1,5 +1,6 @@
 'use strict';
 
+
 /**
  * Modules
  * Electron
@@ -17,13 +18,14 @@ const { ipcRenderer } = electron;
  */
 const tinycolor = require('tinycolor2');
 
+
 /**
- * DOM Elements
  * @global
  */
 let dom = {
     container: document.querySelector('html')
 };
+
 
 /**
  * @listens Electron:ipcRenderer#set-color
@@ -41,3 +43,12 @@ ipcRenderer.on('overlay-update', (ev, displayId, action, value) => {
         dom.container.style.backgroundColor = color.toRgbString();
     }
 });
+
+
+/**
+ * Watch for size changes
+ * @listens document#HTMLEvent:DOMContentLoaded
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    ipcRenderer.send('log', 'overlay', 'DOMContentLoaded');
+}, false);

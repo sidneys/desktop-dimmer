@@ -1,5 +1,6 @@
 'use strict';
 
+
 /**
  * Modules
  * Node
@@ -8,7 +9,6 @@
  */
 const path = require('path');
 const url = require('url');
-const util = require('util');
 
 /**
  * Modules
@@ -17,7 +17,7 @@ const util = require('util');
  * @constant
  */
 const electron = require('electron');
-const { app, BrowserWindow } = electron;
+const { BrowserWindow } = electron;
 
 /**
  * Modules
@@ -28,6 +28,9 @@ const { app, BrowserWindow } = electron;
 const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
 const electronConnect = require('electron-connect');
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
+const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
 
 /**
  * URLS
@@ -35,16 +38,11 @@ const electronConnect = require('electron-connect');
  */
 let overlayUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'overlay.html') });
 
-/**
- * Debug Mode
- * @global
- */
-let devMode;
-let liveReload;
-
 
 /**
  * Overlay Window
+ * @constructor
+ * @extends Electron.BrowserWindow
  * @class
  */
 class OverlayWindow extends BrowserWindow {
@@ -78,14 +76,18 @@ class OverlayWindow extends BrowserWindow {
             this.restoreSettings();
 
             // DEBUG
-            if (global.devMode) {
-                this.webContents.openDevTools({ mode: 'undocked' });
+            if (isDebug) {
+                this.webContents.openDevTools({ mode: 'detach' });
             }
-            if (global.liveReload) {
-                appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+            if (isLivereload) {
+                this.webContents.openDevTools({ mode: 'detach' });
                 const electronConnectClient = electronConnect.client;
-                electronConnectClient.add();
+                electronConnectClient.create();
             }
+        });
+
+        this.on('closed', () => {
+            logger.log('overlay-window', 'closed');
         });
     }
 
@@ -111,17 +113,17 @@ class OverlayWindow extends BrowserWindow {
         });
     }
 
-    setAlpha = function(value) {
+    setAlpha(value) {
         this.alpha = parseFloat(value);
         this.webContents.send('overlay-update', this.displayId, 'alpha', value);
         this.emit('update', this.displayId, 'alpha', value);
-    };
+    }
 
-    setColor = function(value) {
+    setColor(value) {
         this.color = value;
         this.webContents.send('overlay-update', this.displayId, 'color', value);
         this.emit('update', this.displayId, 'color', value);
-    };
+    }
 }
 
 /**

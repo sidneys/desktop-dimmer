@@ -8,6 +8,7 @@
     "immed": false,
     "indent": 4,
     "latedef": true,
+    "loopfunc": true,
     "noarg": true,
     "quotmark": "single",
     "undef": true,

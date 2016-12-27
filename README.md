@@ -1,7 +1,7 @@
-# Desktop Dimmer [![Beta](https://img.shields.io/badge/status-alpha-blue.svg?style=flat)]() [![TravisCI](http://img.shields.io/travis/sidneys/desktop-dimmer.svg?style=flat)](http://travis-ci.org/sidneys/desktop-dimmer) [![AppVeyor](https://ci.appveyor.com/api/projects/status/d69sb6iav7tnrldq?svg=true)](https://ci.appveyor.com/project/sidneys/desktop-dimmer) [![npm](https://img.shields.io/npm/v/desktop-dimmer.svg?style=flat)](https://npmjs.com/package/desktop-dimmer) 
+# Desktop Dimmer [![Beta](https://img.shields.io/badge/status-alpha-blue.svg?style=flat)]() [![travis](http://img.shields.io/travis/sidneys/desktop-dimmer.svg?style=flat)](http://travis-ci.org/sidneys/desktop-dimmer) [![appveyor](https://ci.appveyor.com/api/projects/status/oc57pq7hfslqg3ru?svg=true)](https://ci.appveyor.com/project/sidneys/desktop-dimmer) [![npm](https://img.shields.io/npm/v/desktop-dimmer.svg?style=flat)](https://npmjs.com/package/desktop-dimmer) [![dependencies](https://img.shields.io/david/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer) [![devDependencies](https://img.shields.io/david/dev/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer)
 
 <p align="center">
-  <img height="250px" src="https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/graphics/icon-app.png"/><br><br>
+  <img height="250px" src="https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/graphics/icon.png"/><br><br>
   <b>Enable darker-than-dark dimming for internal and external screens.</b><br>
   Available for macOS, Windows and Linux (Beta).
 </p>

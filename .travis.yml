@@ -16,12 +16,22 @@ branches:
 
 env:
   global:
-    - ARTIFACTS_DIRECTORY="build/release/"
+    - ARTIFACTS_DIRECTORY="build/output/"
 
 cache:
   directories:
     - "$HOME/.electron"
     - "./node_modules"
+
+addons:
+  apt:
+    packages:
+      - icnsutils
+      - gcc-multilib
+      - g++-multilib
+      - graphicsmagick
+      - rpm
+      - xz-utils
 
 before_install:
   - curl -o- https://raw.githubusercontent.com/creationix/nvm/master/install.sh | NVM_DIR=$HOME/.nvm sh
@@ -36,7 +46,7 @@ before_script:
   - echo "Deploying artifacts from $ARTIFACTS_DIRECTORY"
 
 script:
-  - npm run build $TRAVIS_OS_NAME
+  - npm run-script build
 
 after_success:
   - npm run-script deploy:github
@@ -45,6 +55,7 @@ notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/a1a9de50af1c703bfe6c
-    on_success: change
-    on_failure: always
+      - https://updates-desktop-dimmer.herokuapp.com/webhook
+    on_success: always
+    on_failure: never
     on_start: never

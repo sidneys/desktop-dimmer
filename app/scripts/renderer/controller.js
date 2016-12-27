@@ -1,5 +1,14 @@
 'use strict';
 
+
+/**
+ * Modules
+ * Node
+ * @global
+ * @constant
+ */
+const path = require('path');
+
 /**
  * Modules
  * Electron
@@ -8,7 +17,6 @@
  */
 const electron = require('electron');
 const { ipcRenderer, remote } = electron;
-const path = require('path');
 
 /**
  * Modules
@@ -16,25 +24,26 @@ const path = require('path');
  * @global
  * @constant
  */
+const appRootPath = require('app-root-path').path;
 const tinycolor = require('tinycolor2');
 
 /**
- * Electron Global Objects
+ * Modules
+ * Internal
+ * @global
+ * @constant
+ */
+const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+
+
+/**
  * @global
  */
 let controller = remote.getGlobal('appMenubar');
 let preferencesWindow = remote.getGlobal('preferencesWindow');
 let overlays = remote.getGlobal('overlays');
 
-/**
- * Live Reload
- * @global
- */
-if (remote.getGlobal('liveReload')) {
-    const electronConnect = require('electron-connect');
-    const electronConnectClient = electronConnect.client;
-    electronConnectClient.add();
-}
+
 
 
 /**
@@ -61,12 +70,54 @@ let dom = {
     }
 };
 
+
+
 /**
- * @listens Electron:ipcRenderer#controller-show
+ * Get percentage strings from floating point
  */
-ipcRenderer.on('controller-show', () => {
-    addControls();
-});
+let formatOutput = (value) => {
+    return parseInt(100 * value) + ' %';
+};
+
+/**
+ * Pass Slider changes to overlay
+ */
+let handleAttributeChange = (displayId, attribute, value) => {
+    let elControlList = document.querySelectorAll('.display-control-list__display-control');
+    elControlList.forEach(function(elControl) {
+        if (parseInt(elControl.dataset.displayId) === parseInt(displayId)) {
+            // Update alpha percentage label
+            if (attribute === 'alpha') {
+                elControl.querySelector('form > output.alpha').value = formatOutput(value);
+            }
+        }
+    });
+
+    let overlay = remote.getGlobal('overlays')[displayId];
+
+    if (overlay) {
+        if (attribute === 'alpha') {
+            overlay.setAlpha(value);
+        }
+        if (attribute === 'color') {
+            overlay.setColor(tinycolor(value).toRgbString());
+        }
+    }
+};
+
+/**
+ * Pass content size changes to native wrapper window
+ */
+let handleSizeChanges = () => {
+
+    let currentWidth = controller.window.getSize()[0],
+        currentHeight = controller.window.getSize()[1],
+        contentHeight = parseInt(dom.content.getBoundingClientRect().height);
+
+    if (contentHeight !== currentHeight) {
+        controller.window.setSize(currentWidth, contentHeight);
+    }
+};
 
 /**
  * Slider Movement
@@ -118,52 +169,10 @@ let addControls = () => {
     dom.inputList.style.opacity = 1;
 };
 
-/**
- * Pass content size changes to native wrapper window
- */
-let handleSizeChanges = () => {
 
-    let currentWidth = controller.window.getSize()[0],
-        currentHeight = controller.window.getSize()[1],
-        contentHeight = parseInt(dom.content.getBoundingClientRect().height);
 
-    if (contentHeight != currentHeight) {
-        controller.window.setSize(currentWidth, contentHeight);
-    }
-};
 
-/**
- * Get percentage strings from floating point
- */
-let formatOutput = (value) => {
-    return parseInt(100 * value) + ' %';
-};
 
-/**
- * Pass Slider changes to overlay
- */
-let handleAttributeChange = (displayId, attribute, value) => {
-    let elControlList = document.querySelectorAll('.display-control-list__display-control');
-    elControlList.forEach(function(elControl) {
-        if (parseInt(elControl.dataset.displayId) === parseInt(displayId)) {
-            // Update alpha percentage label
-            if (attribute === 'alpha') {
-                elControl.querySelector('form > output.alpha').value = formatOutput(value);
-            }
-        }
-    });
-
-    let overlay = remote.getGlobal('overlays')[displayId];
-
-    if (overlay) {
-        if (attribute === 'alpha') {
-            overlay.setAlpha(value);
-        }
-        if (attribute === 'color') {
-            overlay.setColor(tinycolor(value).toRgbString());
-        }
-    }
-};
 
 /**
  * Window Controls:
@@ -183,10 +192,27 @@ dom.windowControls.settings.addEventListener('click', function() {
     preferencesWindow.show();
 }, false);
 
+
 /**
  * Watch for size changes
  * @listens document#HTMLEvent:DOMContentLoaded
  */
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function() {
     addControls();
+    ipcRenderer.send('log', 'controller', 'DOMContentLoaded');
+
+    // DEBUG
+    if (isLivereload) {
+        const electronConnect = require('electron-connect');
+        const electronConnectClient = electronConnect.client;
+        electronConnectClient.add();
+    }
 }, false);
+
+
+/**
+ * @listens Electron:ipcRenderer#controller-show
+ */
+ipcRenderer.on('controller-show', () => {
+    addControls();
+});

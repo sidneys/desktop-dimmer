@@ -39,14 +39,13 @@ install:
 
 
 build_script:
-  - cmd: npm run-script build win32
+  - cmd: npm run-script build
 
 test: off
 
 artifacts:
-  - path: build\release\*.exe
-      
-    
+  - path: build\output\win\*.exe
+
 deploy:
   - provider: GitHub
     tag: v$(PACKAGE_VERSION)
@@ -65,3 +64,9 @@ notifications:
     on_build_success: false
     on_build_failure: true
     on_build_status_changed: true
+  - provider: Webhook
+    url: https://updates-desktop-dimmer.herokuapp.com/webhook
+    method: POST
+    on_build_success: true
+    on_build_failure: false
+    on_build_status_changed: false

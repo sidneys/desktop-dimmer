@@ -1,5 +1,6 @@
 'use strict';
 
+
 /**
  * Modules
  * Node
@@ -36,11 +37,13 @@ const electronSettings = require('electron-settings');
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
 
+
 /**
  * App
  * @global
  */
 const appProductName = packageJson.productName || packageJson.name;
+
 
 /**
  * @global
@@ -128,6 +131,7 @@ let registerSettings = () => {
 /**
  * @listens document#HTMLEvent:DOMContentLoaded
  */
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function() {
     registerSettings();
+    ipcRenderer.send('log', 'preferences', 'DOMContentLoaded');
 }, false);

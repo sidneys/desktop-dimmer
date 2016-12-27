@@ -8,7 +8,6 @@
  */
 const path = require('path');
 const url = require('url');
-const util = require('util');
 
 /**
  * Modules
@@ -35,6 +34,10 @@ const electronConnect = require('electron-connect');
  * @constant
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
+const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+
 
 /**
  * App
@@ -51,16 +54,14 @@ let preferencesUrl = url.format({
 });
 
 
-/**
- */
-let thisWindow = {};
+let preferencesWindow = {};
 
 
 /**
  * Settings Window
  * @class
  */
-class preferencesWindow extends BrowserWindow {
+class PreferencesWindow extends BrowserWindow {
     constructor() {
         super({
             acceptFirstMouse: true,
@@ -89,16 +90,25 @@ class preferencesWindow extends BrowserWindow {
                 ev.preventDefault();
                 this.hide();
             }
+
+            // DEBUG
+            logger.log('preferences-window', 'close');
         });
 
-        /** @listens mainPage:dom-ready */
+        this.on('closed', () => {
+            logger.log('preferences-window', 'closed');
+        });
+
+        /**
+         * @listens mainPage:dom-ready
+         */
         this.webContents.on('dom-ready', () => {
             // DEBUG
-            if (global.devMode) {
+            if (isDebug) {
                 this.webContents.openDevTools({ mode: 'undocked' });
             }
-            if (global.liveReload) {
-                appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
+            if (isLivereload) {
+                global.appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
                 const electronConnectClient = electronConnect.client;
                 electronConnectClient.add();
             }
@@ -106,30 +116,31 @@ class preferencesWindow extends BrowserWindow {
     }
 }
 
-/**
- * Init global preferences window
- */
-let initialize = () => {
-    thisWindow = new preferencesWindow;
-    global.preferencesWindow = thisWindow;
-};
 
 /**
  * @listens app#before-quit
  */
 app.on('before-quit', () => {
-    thisWindow.forceQuit = true;
+    preferencesWindow.forceQuit = true;
+
+    // DEBUG
+    logger.log('preferences-window', 'before-quit');
 });
+
 
 /**
  * @listens app#ready
  */
 app.on('ready', () => {
-    initialize();
+    preferencesWindow = new PreferencesWindow();
+    global.preferencesWindow = preferencesWindow;
+
+    // DEBUG
+    logger.log('preferences-window', 'ready');
 });
 
 
 /**
  * @exports
  */
-module.exports = thisWindow;
+module.exports = preferencesWindow;

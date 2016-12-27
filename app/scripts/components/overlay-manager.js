@@ -7,8 +7,6 @@
  * @constant
  */
 const path = require('path');
-const url = require('url');
-const util = require('util');
 
 /**
  * Modules
@@ -26,7 +24,6 @@ const { app } = electron;
  * @constant
  */
 const _ = require('lodash');
-const menubar = require('menubar');
 const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
 
@@ -37,7 +34,15 @@ const electronSettings = require('electron-settings');
  * @constant
  */
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 const OverlayWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'overlay-window'));
+
+
+/**
+ * Create reference for Overlays
+ * @global
+ */
+global.overlays = {};
 
 
 /**
@@ -48,23 +53,67 @@ let appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, 'i
     appTrayIconDisabled = path.join(appRootPath, 'icons', platformHelper.type, 'icon-tray-disabled' + platformHelper.templateImageExtension(platformHelper.name));
 
 /**
- * Create reference for Overlays
- * @global
+ * Save Overlay Settings for each Display
  */
-let overlays = global.overlays = {};
+let persistConfiguration = () => {
+    let savedOverlays = electronSettings.getSync('internal.overlays');
+
+    for (let i in global.overlays) {
+        savedOverlays[global.overlays[i].displayId] = {
+            alpha: global.overlays[i].alpha,
+            color: global.overlays[i].color
+        };
+    }
+    electronSettings.setSync('internal.overlays', savedOverlays);
+};
+
+/**
+ * Remove all Overlays
+ * @param { Boolean } restart - relaunch app after removal
+ */
+let removeOverlays = (restart) => {
+     persistConfiguration();
+
+     logger.log('overlay-manager', 'remove');
+
+    // Keep track of total number
+    let overlayCount = Object.keys(global.overlays).length;
+    let index = 1;
+
+    for (let i in global.overlays) {
+        // Check whether BrowserWindow is deleted or destroyed
+        if (global.overlays[i].isDestroyed()) {
+            return;
+        }
+
+        // After window close
+        global.overlays[i].on('closed', () => {
+            // Remove reference
+            global.overlays[i] = null;
+            //delete global.overlays[i];
+            // Last window, restart app to reinitialize
+            if (index === overlayCount) {
+                if (restart) {
+                    app.relaunch();
+                    app.exit();
+                }
+            }
+
+            index++;
+        });
+
+        // Close window
+        global.overlays[i].close();
+
+    }
+};
 
 /**
  * Remove and recreate all Overlays
  */
 let resetOverlays = () => {
-    persistOverlaySettings();
-
-    for (let i in overlays) {
-        overlays[i].close();
-        delete overlays[i];
-    }
-
-    createOverlays();
+    logger.log('overlay-manager', 'restart');
+    removeOverlays(true);
 };
 
 /**
@@ -72,49 +121,39 @@ let resetOverlays = () => {
  */
 let createOverlays = () => {
     electron.screen.getAllDisplays().forEach(function(display) {
-        overlays[display.id] = new OverlayWindow(display);
-        overlays[display.id].on('update', () => {
-            let pristineOverlays = _.clone(overlays);
+        global.overlays[display.id] = new OverlayWindow(display);
+        global.overlays[display.id].on('update', () => {
+            let pristineOverlays = _.clone(global.overlays);
+
             pristineOverlays = _.filter(pristineOverlays, function(overlay) {
-                return (overlay.alpha === 0)
+                return (overlay.alpha === 0);
             });
-            if (pristineOverlays.length !== Object.keys(overlays).length) {
-                appMenubar.tray.setImage(appTrayIconEnabled);
+
+            if (pristineOverlays.length !== Object.keys(global.overlays).length) {
+                global.appMenubar.tray.setImage(appTrayIconEnabled);
             } else {
-                appMenubar.tray.setImage(appTrayIconDisabled);
+                global.appMenubar.tray.setImage(appTrayIconDisabled);
             }
-        })
+        });
     });
 };
 
-/**
- * Save Overlay Settings for each Display
- */
-let persistOverlaySettings = () => {
-    let savedOverlays = electronSettings.getSync('internal.overlays');
-
-    for (let i in overlays) {
-        savedOverlays[overlays[i].displayId] = {
-            alpha: overlays[i].alpha,
-            color: overlays[i].color
-        };
-    }
-    electronSettings.setSync('internal.overlays', savedOverlays);
-};
 
 /**
  * @listens appMenubar#before-quit
  */
 app.on('before-quit', () => {
-    persistOverlaySettings();
+    persistConfiguration();
+    logger.log('overlay-manager', 'before-quit');
 });
-
 
 
 /**
  * @exports
  */
 module.exports = {
+    persist: persistConfiguration,
     create: createOverlays,
+    remove: removeOverlays,
     reset: resetOverlays
 };

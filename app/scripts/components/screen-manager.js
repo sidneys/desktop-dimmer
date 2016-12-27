@@ -7,8 +7,6 @@
  * @constant
  */
 const path = require('path');
-const url = require('url');
-const util = require('util');
 
 /**
  * Modules
@@ -34,15 +32,19 @@ const appRootPath = require('app-root-path').path;
  * @constant
  */
 const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 
 
 /**
- *  Adapt to changes in Display configuration
+ *  Handle display changes
  */
 let handleScreenChanges = () => {
     ['display-metrics-changed', 'display-added', 'display-removed'].forEach(function(ev) {
         electron.screen.on(ev, () => {
             overlayManager.reset();
+
+            // DEBUG
+            logger.debug('handleScreenChanges', ev);
         });
     });
 };
