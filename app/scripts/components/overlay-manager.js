@@ -90,7 +90,7 @@ let removeOverlays = (restart) => {
         global.overlays[i].on('closed', () => {
             // Remove reference
             global.overlays[i] = null;
-            //delete global.overlays[i];
+            delete global.overlays[i];
             // Last window, restart app to reinitialize
             if (index === overlayCount) {
                 if (restart) {

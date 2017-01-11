@@ -1,7 +1,7 @@
 {
   "name": "desktop-dimmer",
   "productName": "Desktop Dimmer",
-  "version": "1.9.91",
+  "version": "1.9.92",
   "description": "Enables darker-than-dark Desktop dimming for your displays",
   "license": "MIT",
   "homepage": "https://sidneys.github.io/desktop-dimmer",
@@ -56,7 +56,7 @@
     "tinycolor2": "latest"
   },
   "devDependencies": {
-    "electron": "^1.4.13",
+    "electron": "^1.4.14",
     "electron-builder": "^11.2.3",
     "electron-builder-squirrel-windows": "^11.2.1",
     "fkill": "^4.1.0",
