@@ -26,6 +26,7 @@ const { ipcRenderer, remote } = electron;
  */
 const appRootPath = require('app-root-path').path;
 const tinycolor = require('tinycolor2');
+const electronConnect = require('electron-connect');
 
 /**
  * Modules
@@ -33,17 +34,16 @@ const tinycolor = require('tinycolor2');
  * @global
  * @constant
  */
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
 
 
 /**
  * @global
  */
-let controller = remote.getGlobal('appMenubar');
-let preferencesWindow = remote.getGlobal('preferencesWindow');
+let controller = remote.getGlobal('menubar');
+let windows = remote.getGlobal('windows');
 let overlays = remote.getGlobal('overlays');
-
-
 
 
 /**
@@ -71,11 +71,12 @@ let dom = {
 };
 
 
-
 /**
  * Get percentage strings from floating point
  */
 let formatOutput = (value) => {
+    logger.debug('controller', 'formatOutput()');
+
     return parseInt(100 * value) + ' %';
 };
 
@@ -83,6 +84,8 @@ let formatOutput = (value) => {
  * Pass Slider changes to overlay
  */
 let handleAttributeChange = (displayId, attribute, value) => {
+    logger.debug('controller', 'handleAttributeChange()');
+
     let elControlList = document.querySelectorAll('.display-control-list__display-control');
     elControlList.forEach(function(elControl) {
         if (parseInt(elControl.dataset.displayId) === parseInt(displayId)) {
@@ -109,10 +112,11 @@ let handleAttributeChange = (displayId, attribute, value) => {
  * Pass content size changes to native wrapper window
  */
 let handleSizeChanges = () => {
+    logger.debug('controller', 'handleSizeChanges()');
 
-    let currentWidth = controller.window.getSize()[0],
-        currentHeight = controller.window.getSize()[1],
-        contentHeight = parseInt(dom.content.getBoundingClientRect().height);
+    let currentWidth = controller.window.getSize()[0];
+    let currentHeight = controller.window.getSize()[1];
+    let contentHeight = parseInt(dom.content.getBoundingClientRect().height);
 
     if (contentHeight !== currentHeight) {
         controller.window.setSize(currentWidth, contentHeight);
@@ -123,8 +127,10 @@ let handleSizeChanges = () => {
  * Slider Movement
  */
 let addControls = () => {
-    let displayList = electron.screen.getAllDisplays(),
-        overlayList = [];
+    logger.debug('controller', 'addControls()');
+
+    let displayList = electron.screen.getAllDisplays();
+    let overlayList = [];
 
     for (let o in overlays) {
         for (let d in displayList) {
@@ -170,49 +176,50 @@ let addControls = () => {
 };
 
 
-
-
-
-
-/**
- * Window Controls:
- * Quit
- * @listens quit:click
- */
-dom.windowControls.exit.addEventListener('click', function() {
-    remote.app.quit();
-}, false);
-
-/**
- * Window Controls:
- * Settings
- * @listens settings:click
- */
-dom.windowControls.settings.addEventListener('click', function() {
-    preferencesWindow.show();
-}, false);
-
-
-/**
- * Watch for size changes
- * @listens document#HTMLEvent:DOMContentLoaded
- */
-document.addEventListener('DOMContentLoaded', function() {
-    addControls();
-    ipcRenderer.send('log', 'controller', 'DOMContentLoaded');
-
-    // DEBUG
-    if (isLivereload) {
-        const electronConnect = require('electron-connect');
-        const electronConnectClient = electronConnect.client;
-        electronConnectClient.add();
-    }
-}, false);
-
-
 /**
  * @listens Electron:ipcRenderer#controller-show
  */
 ipcRenderer.on('controller-show', () => {
+    logger.debug('controller', 'ipcRenderer#controller-show');
+
     addControls();
 });
+
+/**
+ * Controls: Quit
+ * @listens dom.windowControls.exit#MouseEvent:click
+ */
+dom.windowControls.exit.addEventListener('click', function() {
+    logger.debug('controller', 'exit#click');
+
+    remote.app.quit();
+}, false);
+
+/**
+ * Controls: Open Settings
+ * @listens dom.windowControls.settings#MouseEvent:click
+ */
+dom.windowControls.settings.addEventListener('click', function() {
+    logger.debug('controller', 'settings#click');
+
+    windows.preferences.show();
+}, false);
+
+
+//noinspection JSValidateJSDoc
+/**
+ * Watch for size changes
+ * @listens document#DOMContentLoaded
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    logger.debug('controller', 'document#DOMContentLoaded');
+
+    addControls();
+
+    logger.debug(process.type)
+
+    // DEBUG
+    if (isLivereload) {
+        electronConnect.client.add();
+    }
+}, false);

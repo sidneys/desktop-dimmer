@@ -15,7 +15,6 @@ const path = require('path');
  * @constant
  */
 const electron = require('electron');
-const { app } = electron;
 
 /**
  * Modules
@@ -33,9 +32,18 @@ const electronSettings = require('electron-settings');
  * @global
  * @constant
  */
+const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 const OverlayWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'overlay-window'));
+
+
+/**
+ * App
+ * @global
+ * @constant
+ */
+const appName = packageJson.name;
 
 
 /**
@@ -46,17 +54,12 @@ global.overlays = {};
 
 
 /**
- * Paths
- * @global
- */
-let appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, 'icon-tray' + platformHelper.templateImageExtension(platformHelper.name)),
-    appTrayIconDisabled = path.join(appRootPath, 'icons', platformHelper.type, 'icon-tray-disabled' + platformHelper.templateImageExtension(platformHelper.name));
-
-/**
  * Save Overlay Settings for each Display
  */
 let persistConfiguration = () => {
-    let savedOverlays = electronSettings.getSync('internal.overlays');
+    logger.debug('overlay-manager', 'persistConfiguration()');
+
+    let savedOverlays = electronSettings.getSync('overlays');
 
     for (let i in global.overlays) {
         savedOverlays[global.overlays[i].displayId] = {
@@ -64,7 +67,7 @@ let persistConfiguration = () => {
             color: global.overlays[i].color
         };
     }
-    electronSettings.setSync('internal.overlays', savedOverlays);
+    electronSettings.setSync('overlays', savedOverlays);
 };
 
 /**
@@ -72,9 +75,9 @@ let persistConfiguration = () => {
  * @param { Boolean } restart - relaunch app after removal
  */
 let removeOverlays = (restart) => {
-     persistConfiguration();
+    logger.debug('overlay-manager', 'removeOverlays()');
 
-     logger.log('overlay-manager', 'remove');
+    persistConfiguration();
 
     // Keep track of total number
     let overlayCount = Object.keys(global.overlays).length;
@@ -88,14 +91,16 @@ let removeOverlays = (restart) => {
 
         // After window close
         global.overlays[i].on('closed', () => {
+            logger.debug('overlay-manager', 'overlay:closed');
+
             // Remove reference
             global.overlays[i] = null;
             delete global.overlays[i];
             // Last window, restart app to reinitialize
             if (index === overlayCount) {
                 if (restart) {
-                    app.relaunch();
-                    app.exit();
+                    global.menubar.app.relaunch();
+                    global.menubar.app.exit();
                 }
             }
 
@@ -104,7 +109,6 @@ let removeOverlays = (restart) => {
 
         // Close window
         global.overlays[i].close();
-
     }
 };
 
@@ -112,7 +116,8 @@ let removeOverlays = (restart) => {
  * Remove and recreate all Overlays
  */
 let resetOverlays = () => {
-    logger.log('overlay-manager', 'restart');
+    logger.debug('overlay-manager', 'resetOverlays()');
+
     removeOverlays(true);
 };
 
@@ -120,21 +125,10 @@ let resetOverlays = () => {
  * Creates Overlay windows for all screens
  */
 let createOverlays = () => {
+    logger.debug('overlay-manager', 'createOverlays()');
+
     electron.screen.getAllDisplays().forEach(function(display) {
         global.overlays[display.id] = new OverlayWindow(display);
-        global.overlays[display.id].on('update', () => {
-            let pristineOverlays = _.clone(global.overlays);
-
-            pristineOverlays = _.filter(pristineOverlays, function(overlay) {
-                return (overlay.alpha === 0);
-            });
-
-            if (pristineOverlays.length !== Object.keys(global.overlays).length) {
-                global.appMenubar.tray.setImage(appTrayIconEnabled);
-            } else {
-                global.appMenubar.tray.setImage(appTrayIconDisabled);
-            }
-        });
     });
 };
 
@@ -142,9 +136,19 @@ let createOverlays = () => {
 /**
  * @listens appMenubar#before-quit
  */
-app.on('before-quit', () => {
+global.menubar.app.on('before-quit', () => {
+    logger.debug('overlay-manager', 'menubar.app:before-quit');
+
     persistConfiguration();
-    logger.log('overlay-manager', 'before-quit');
+});
+
+/**
+ * @listens Electron#app:ready
+ */
+global.menubar.app.on('ready', () => {
+    logger.debug('overlay-manager', 'menubar.app:ready');
+
+    createOverlays();
 });
 
 
@@ -152,8 +156,8 @@ app.on('before-quit', () => {
  * @exports
  */
 module.exports = {
-    persist: persistConfiguration,
     create: createOverlays,
+    persist: persistConfiguration,
     remove: removeOverlays,
     reset: resetOverlays
 };

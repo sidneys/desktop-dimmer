@@ -16,7 +16,9 @@ const url = require('url');
  * @constant
  */
 const electron = require('electron');
-const { app, BrowserWindow } = electron;
+const { BrowserWindow } = electron;
+const app = global.menubar.app;
+
 
 /**
  * Modules
@@ -40,20 +42,17 @@ const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
 
 
 /**
- * App
  * @global
+ * @constant
  */
-let appProductName = packageJson.productName || packageJson.name;
-
-/**
- * URLS
- * @global
- */
-let preferencesUrl = url.format({
+const appProductName = packageJson.productName || packageJson.name;
+const windowUrl = url.format({
     protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'preferences.html')
 });
 
-
+/**
+ * @global
+ */
 let preferencesWindow = {};
 
 
@@ -65,16 +64,20 @@ class PreferencesWindow extends BrowserWindow {
     constructor() {
         super({
             acceptFirstMouse: true,
-            alwaysOnTop: true,
+            alwaysOnTop: false,
             fullscreenable: false,
-            width: 320,
-            height: 128,
             maximizable: false,
             minimizable: false,
+            height: 128,
+            minHeight: 128,
+            maxHeight: 256,
             resizable: false,
             show: false,
+            title: `${appProductName} Preferences`,
             type: 'textured',
-            title: appProductName + ' Preferences'
+            width: 320,
+            minWidth: 320,
+            maxWidth: 640,
         });
 
         this.forceQuit = false;
@@ -83,60 +86,66 @@ class PreferencesWindow extends BrowserWindow {
     }
 
     init() {
-        this.loadURL(preferencesUrl);
+        logger.debug('preferences-window', 'init()');
 
+        this.loadURL(windowUrl);
+
+        /**
+         * @listens Electron#BrowserWindow:close
+         */
         this.on('close', (ev) => {
+            logger.debug('preferences-window', 'close');
+
             if (!this.forceQuit) {
                 ev.preventDefault();
                 this.hide();
             }
-
-            // DEBUG
-            logger.log('preferences-window', 'close');
-        });
-
-        this.on('closed', () => {
-            logger.log('preferences-window', 'closed');
         });
 
         /**
-         * @listens mainPage:dom-ready
+         * @listens Electron#BrowserWindow:closed
+         */
+        this.on('closed', () => {
+            logger.debug('preferences-window', 'closed');
+        });
+
+        /**
+         * @listens Electron#WebContents:dom-ready
          */
         this.webContents.on('dom-ready', () => {
+            logger.debug('preferences-window.webContents', '#dom-ready');
+
             // DEBUG
             if (isDebug) {
-                this.webContents.openDevTools({ mode: 'undocked' });
+                this.webContents.openDevTools({ mode: 'detach' });
             }
             if (isLivereload) {
-                global.appMenubar.window.webContents.openDevTools({ mode: 'undocked' });
-                const electronConnectClient = electronConnect.client;
-                electronConnectClient.add();
+                electronConnect.client.add();
             }
+        });
+
+        /**
+         * @listens app#before-quit
+         */
+        app.on('before-quit', () => {
+            logger.debug('preferences-window', 'app#before-quit');
+
+            this.forceQuit = true;
         });
     }
 }
 
 
 /**
- * @listens app#before-quit
- */
-app.on('before-quit', () => {
-    preferencesWindow.forceQuit = true;
-
-    // DEBUG
-    logger.log('preferences-window', 'before-quit');
-});
-
-
-/**
- * @listens app#ready
+ * @listens menubar#ready
  */
 app.on('ready', () => {
-    preferencesWindow = new PreferencesWindow();
-    global.preferencesWindow = preferencesWindow;
+    logger.debug('preferences-window', 'app#ready');
 
-    // DEBUG
-    logger.log('preferences-window', 'ready');
+    preferencesWindow = new PreferencesWindow();
+
+    if (!global.windows) { global.windows = {}; }
+    global.windows.preferences = preferencesWindow;
 });
 
 

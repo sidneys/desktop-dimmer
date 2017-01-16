@@ -6,13 +6,13 @@
    ========================================================================== */
 
 html, body {
-    font-size: 62.5%;
     padding: 0;
     margin: 0;
     overflow: hidden;
+}
+
+html * {
     -webkit-font-smoothing: subpixel-antialiased;
-    font-family: 'Roboto', sans-serif;
-    font-weight: 300;
 }
 
 /* ==========================================================================
@@ -22,7 +22,7 @@ html, body {
 /* html
    ========================================================================== */
 
-html .overlay {
+html.overlay {
     background-color: transparent;
 }
 
@@ -33,7 +33,10 @@ html .overlay {
 /* html
    ========================================================================== */
 
-html .controller {
+html.controller {
+    font-size: 62.5%;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
     background-color: transparent;
 }
 
@@ -95,11 +98,11 @@ html .controller {
 /* .display-control__alpha_slider
    ========================================================================== */
 
-.display-control-list__display-control input.alpha {
+input.alpha {
     position: relative;
     display: block;
     float: right;
-    width: 80%;
+    width: 75%;
     height: 3rem;
     margin: 0;
     padding: 0 5% 0 0;
@@ -107,7 +110,7 @@ html .controller {
 
 /* .display-control__alpha-label
    ========================================================================== */
-.display-control-list__display-control output.alpha {
+output.alpha {
     color: rgba(255, 255, 255, 1);
     padding: 0 0 0 5%;
     width: 15%;
@@ -117,6 +120,7 @@ html .controller {
     float: left;
     font-size: 1.2rem;
 }
+
 
 /* input
    ========================================================================== */
@@ -145,4 +149,13 @@ input[type=range]::-webkit-slider-thumb {
 
 input[type=range]:focus {
     outline: none;
+}
+
+/* name
+   ========================================================================== */
+.preferences .name, .preferences .version {
+    text-align: right;
+    font-size: 0.7rem;
+    line-height: 0.7rem;
+    opacity: 0.5;
 }

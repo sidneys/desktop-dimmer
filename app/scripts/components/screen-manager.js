@@ -15,7 +15,6 @@ const path = require('path');
  * @constant
  */
 const electron = require('electron');
-const { app } = electron;
 
 /**
  * Modules
@@ -50,8 +49,8 @@ let handleScreenChanges = () => {
 };
 
 /**
- * @listens app#ready
+ * @listens menubar#ready
  */
-app.on('ready', () => {
+global.menubar.app.on('ready', () => {
     handleScreenChanges();
 });

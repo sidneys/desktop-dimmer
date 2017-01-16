@@ -3,6 +3,14 @@
 
 /**
  * Modules
+ * Node
+ * @global
+ * @constant
+ */
+const path = require('path');
+
+/**
+ * Modules
  * Electron
  * @global
  * @constant
@@ -18,6 +26,15 @@ const { ipcRenderer } = electron;
  */
 const tinycolor = require('tinycolor2');
 
+/**
+ * Modules
+ * Internal
+ * @global
+ * @constant
+ */
+const appRootPath = require('app-root-path').path;
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+
 
 /**
  * @global
@@ -28,27 +45,31 @@ let dom = {
 
 
 /**
- * @listens Electron:ipcRenderer#set-color
+ * @listens Electron:ipcRenderer#overlay-update
  */
 ipcRenderer.on('overlay-update', (ev, displayId, action, value) => {
+    logger.debug('overlay-manager', 'ipcRenderer#overlay-update');
+
     let currentColor = tinycolor(dom.container.style.backgroundColor);
 
-    if (action === 'alpha') {
-        dom.container.style.backgroundColor = currentColor.setAlpha(parseFloat(value)).toRgbString();
-    }
-
-    if (action === 'color') {
-        let color = tinycolor(value);
-        color.setAlpha((currentColor.getAlpha()));
-        dom.container.style.backgroundColor = color.toRgbString();
+    switch (action) {
+        case 'alpha':
+            dom.container.style.backgroundColor = currentColor.setAlpha(parseFloat(value)).toRgbString();
+            break;
+        case 'color':
+            let color = tinycolor(value);
+            color.setAlpha((currentColor.getAlpha()));
+            dom.container.style.backgroundColor = color.toRgbString();
+            break;
     }
 });
 
 
+//noinspection JSValidateJSDoc
 /**
  * Watch for size changes
- * @listens document#HTMLEvent:DOMContentLoaded
+ * @listens document#DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-    ipcRenderer.send('log', 'overlay', 'DOMContentLoaded');
+    logger.debug('overlay-manager', 'document#DOMContentLoaded');
 }, false);

@@ -55,14 +55,14 @@ let trayMenuTemplate = [
         label: 'Show',
         enabled: true,
         click() {
-            global.appMenubar.window.show();
+            global.menubar.window.show();
         }
     },
     {
         label: 'Quit',
         enabled: true,
         click() {
-            global.appMenubar.app.quit();
+            global.menubar.app.quit();
         }
     }
 ];

@@ -1,7 +1,7 @@
 {
   "name": "desktop-dimmer",
   "productName": "Desktop Dimmer",
-  "version": "1.9.92",
+  "version": "2.5.0",
   "description": "Enables darker-than-dark Desktop dimming for your displays",
   "license": "MIT",
   "homepage": "https://sidneys.github.io/desktop-dimmer",
@@ -37,32 +37,34 @@
     "app-root-path": "^2.0.1",
     "appdirectory": "^0.1.0",
     "auto-launch": "^5.0.1",
-    "babel-cli": "^6.18.0",
-    "babel-preset-electron": "^0.37.8",
+    "babel-cli": "^6.23.0",
+    "babel-preset-electron": "^1.4.15",
     "chalk": "^1.1.3",
     "color-picker": "git+https://github.com/purtuga/color-picker.git",
-    "electron-auto-updater": "^0.10.1",
-    "electron-compile": "^5.1.2",
-    "electron-compilers": "^5.3.2",
+    "electron-compile": "^6.1.2",
+    "electron-compilers": "^5.5.1",
     "electron-connect": "^0.6.1",
     "electron-editor-context-menu": "^1.1.1",
     "electron-settings": "^2.2.2",
     "electron-squirrel-startup": "^1.0.0",
-    "fs-extra": "^1.0.0",
+    "electron-updater": "^1.7.1",
+    "file-type": "^4.1.0",
+    "fs-extra": "^2.0.0",
+    "keypath": "^0.0.1",
     "lodash": "^4.17.4",
-    "menubar": "^5.2.0",
+    "menubar": "^5.2.3",
+    "read-chunk": "^2.0.0",
     "semver-compare": "^1.0.0",
-    "semver-regex": "^1.0.0",
     "tinycolor2": "latest"
   },
   "devDependencies": {
-    "electron": "^1.4.14",
-    "electron-builder": "^11.2.3",
-    "electron-builder-squirrel-windows": "^11.2.1",
+    "electron": "1.4.14",
+    "electron-builder": "11.5.1",
+    "electron-builder-squirrel-windows": "11.5.0",
     "fkill": "^4.1.0",
     "glob": "^7.1.1",
     "gulp": "^3.9.1",
-    "gulp-load-plugins": "^1.4.0",
+    "gulp-load-plugins": "^1.5.0",
     "minimist": "^1.2.0",
     "progress": "^1.1.8",
     "publish-release": "^1.3.3"
@@ -110,13 +112,53 @@
     },
     "linux": {
       "target": [
-        "deb"
+        "AppImage",
+        "deb",
+        "pacman",
+        "rpm"
       ],
       "category": "Utility"
+    },
+    "AppImage": {
+      "includeRequiredLib": true
+    },
+    "deb": {
+      "depends": [
+        "libappindicator1",
+        "libgconf-2-4",
+        "libnotify-bin",
+        "libnotify4"
+      ]
     },
     "dmg": {
       "background": "./icons/darwin/background-setup.png",
       "icon": "./icons/darwin/icon-setup.icns"
+    },
+    "pacman": {
+      "depends": [
+        "c-ares",
+        "ffmpeg",
+        "gtk3",
+        "http-parser",
+        "libappindicator-gtk2",
+        "libappindicator-gtk3",
+        "libappindicator-sharp",
+        "libevent",
+        "libnotify",
+        "libvpx",
+        "libxslt",
+        "libxss",
+        "minizip",
+        "nss",
+        "re2",
+        "snappy"
+      ]
+    },
+    "rpm": {
+      "depends": [
+        "libappindicator",
+        "libnotify"
+      ]
     },
     "squirrelWindows": {
       "iconUrl": "https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/icons/win32/icon.ico",

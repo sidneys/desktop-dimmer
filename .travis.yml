@@ -26,6 +26,7 @@ cache:
 addons:
   apt:
     packages:
+      - bsdtar
       - icnsutils
       - gcc-multilib
       - g++-multilib
@@ -34,28 +35,28 @@ addons:
       - xz-utils
 
 before_install:
+  - echo "Installing nvm"
   - curl -o- https://raw.githubusercontent.com/creationix/nvm/master/install.sh | NVM_DIR=$HOME/.nvm sh
   - source $HOME/.nvm/nvm.sh
-  - nvm install 7.2.1
-  - nvm use 7.2.1
+  - nvm install 7.6.0
+  - nvm use 7.6.0
 
 install:
+  - echo "Installing dependencies"
   - npm install
 
-before_script:
-  - echo "Deploying artifacts from $ARTIFACTS_DIRECTORY"
-
 script:
+  - echo "Building artifacts"
   - npm run-script build
 
 after_success:
+  - echo "Deploying artifacts"
   - npm run-script deploy:github
 
 notifications:
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/a1a9de50af1c703bfe6c
-      - https://updates-desktop-dimmer.herokuapp.com/webhook
-    on_success: always
-    on_failure: never
+    on_success: change
+    on_failure: always
     on_start: never

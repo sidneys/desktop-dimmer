@@ -17,16 +17,9 @@ const util = require('util');
  * @global
  * @constant
  */
-const electron = require('electron');
-const { app, ipcMain } = electron;
+//const electron = require('electron');
+const Menubar = require('menubar');
 
-/**
- * Chrome Commandline Switches
- */
-if ((os.platform() === 'linux')) {
-    app.commandLine.appendSwitch('enable-transparent-visuals');
-    app.commandLine.appendSwitch('disable-gpu');
-}
 
 /**
  * Modules
@@ -34,7 +27,6 @@ if ((os.platform() === 'linux')) {
  * @global
  * @constant
  */
-const menubar = require('menubar');
 const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
 const electronConnect = require('electron-connect');
@@ -48,16 +40,10 @@ const electronConnect = require('electron-connect');
 
 const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
-const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager'));
-const trayMenu = require(path.join(appRootPath, 'app', 'scripts', 'menus', 'tray-menu'));
 const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
 const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
-/* jshint ignore:start */
-const screenManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'screen-manager'));
-const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'preferences-window'));
-const updaterService = require(path.join(appRootPath, 'app', 'scripts', 'services', 'updater-service'));
-/* jshint ignore:end */
+
 
 /**
  * URLS
@@ -71,57 +57,78 @@ const controllerUrl = url.format({
  * App
  * @global
  */
+const appName = packageJson.name;
 const appVersion = packageJson.version;
 
 /**
  * Paths
  * @global
  */
-const appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, 'icon-tray-enabled' + platformHelper.templateImageExtension(platformHelper.name));
+const appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-default${platformHelper.templateImageExtension(platformHelper.name)}`);
 
 /**
- * Create reference for App Menubar Controller (Menubar)
+ * Menubar Controller (Menubar)
  * @global
  * @constant
  */
-const appMenubar = menubar({
-    width: 256,
-    minWidth: 256,
-    maxWidth: 256,
+const menubar = Menubar({
+    alwaysOnTop: isDebug,
+    backgroundColor: platformHelper.isMacOS ? null : '#404040',
+    hasShadow: false,
     height: 48,
-    minHeight: 48,
-    preloadWindow: true,
     icon: appTrayIconEnabled,
     index: controllerUrl,
-    alwaysOnTop: isDebug === true,
-    backgroundColor: platformHelper.isMacOS ? null : '#404040',
+    maxWidth: 256,
+    minHeight: 48,
+    minWidth: 256,
+    preloadWindow: true,
+    showDockIcon: isDebug,
     vibrancy: 'dark',
-    hasShadow: false
+    width: 256,
 });
+global.menubar = menubar;
+
+/**
+ * Modules
+ * Internal
+ * @global
+ * @constant
+ */
+const trayMenu = require(path.join(appRootPath, 'app', 'scripts', 'menus', 'tray-menu'));
+const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager')); // jshint ignore:line
+const screenManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'screen-manager')); // jshint ignore:line
+const updaterService = require(path.join(appRootPath, 'app', 'scripts', 'services', 'updater-service'));  // jshint ignore:line
+const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'preferences-window'));  // jshint ignore:line
+
+
+/**
+ * GPU Settings
+ * @global
+ */
+menubar.app.disableHardwareAcceleration();
+if ((os.platform() === 'linux')) {
+    menubar.app.commandLine.appendSwitch('enable-transparent-visuals');
+}
+
 
 /**
  * Settings Defaults
- * @property {String} internal.currentVersion - Application Version
- * @property {Boolean} internal.updatePending - Hashmap
- * @property {Object} internal.overlays - Hashmap
- * @property {Number} display.id- Play Notification Sound
- * @property {Number} display.alpha - Autostart
- * @property {String} display.color - Show recent pushes
+ * @property {String} currentVersion - Application Version
+ * @property {Object} overlays - Hashmap
+ * @property {Boolean} launchOnStartup - Auto launch
  */
 let settingsDefaults = {
-    internal: {
-        currentVersion: appVersion,
-        overlays: {}
-    },
-    user: {
-        launchOnStartup: false
-    }
+    currentVersion: appVersion,
+    overlays: {},
+    launchOnStartup: false
 };
 
 /**
  * Init Settings
  */
 let initializeSettings = () => {
+    logger.debug('application', 'initializeSettings()');
+
     // Settings Defaults
     electronSettings.defaults(settingsDefaults);
     electronSettings.applyDefaultsSync();
@@ -131,64 +138,59 @@ let initializeSettings = () => {
         prettify: true,
         atomicSaving: true
     });
-
-    logger.log('settings', `settingsFilePath: '${electronSettings.getSettingsFilePath()}'`);
-    logger.debug('settings', util.inspect(electronSettings.getSync()));
 };
 
 
 /**
- * @listens app#quit
+ * @listens menubar#quit
  */
-app.on('quit', () => {
-    logger.log('settings', `settingsFilePath: '${electronSettings.getSettingsFilePath()}'`);
-    logger.debug('settings', util.inspect(electronSettings.getSync()));
+menubar.app.on('before-quit', () => {
+    logger.debug('application', electronSettings.getSettingsFilePath());
+    logger.debug('application', util.inspect(electronSettings.getSync()));
 });
 
 /**
- * @listens app#ready
+ * @listens menubar#after-create-window
  */
-app.on('ready', () => {
-    global.appMenubar = appMenubar;
+menubar.on('after-create-window', () => {
+    logger.debug('application', 'menubar:after-create-window');
 
     initializeSettings();
-    overlayManager.create();
 
     if (platformHelper.isLinux) {
-        trayMenu.add(appMenubar.tray);
+        trayMenu.add(menubar.tray);
     }
 
-    // DEBUG
-    logger.log('application', 'ready');
+    /**
+     * @listens Electron#WebContents:dom-ready
+     */
+    menubar.window.webContents.on('dom-ready', () => {
+        logger.debug('application', 'menubar:dom-ready');
 
-    // DEBUG
-    if (isDebug) {
-        appMenubar.window.webContents.openDevTools({ mode: 'detach' });
-    }
-    if (isLivereload) {
-        appMenubar.window.webContents.openDevTools({ mode: 'detach' });
-        const electronConnectClient = electronConnect.client;
-        electronConnectClient.create();
-    }
+        // DEBUG
+        if (isDebug) {
+            menubar.window.webContents.openDevTools({ mode: 'detach' });
+        }
+        if (isLivereload) {
+            electronConnect.client.create();
+        }
+    });
 });
 
 /**
- * @listens appMenubar#hide
+ * @listens menubar#hide
  */
-appMenubar.on('hide', () => {
-    appMenubar.window.webContents.send('controller-hide');
+menubar.on('hide', () => {
+    logger.debug('application', 'menubar:hide');
+
+    menubar.window.webContents.send('controller-hide');
 });
 
 /**
- * @listens appMenubar#show
+ * @listens menubar#show
  */
-appMenubar.on('show', () => {
-    appMenubar.window.webContents.send('controller-show');
-});
+menubar.on('show', () => {
+    logger.debug('application', 'menubar:show');
 
-/**
- * @listens ipcMain#log
- */
-ipcMain.on('log', (event, message) => {
-    logger.log('renderer', message);
+    menubar.window.webContents.send('controller-show');
 });
