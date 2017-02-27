@@ -16,10 +16,15 @@ const path = require('path');
  * @global
  * @constant
  */
-const _ = require('lodash');
 const appRootPath = require('app-root-path').path;
 const autoLaunch = require('auto-launch');
 const electronSettings = require('electron-settings');
+const _ = require('lodash');
+
+/**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -45,7 +50,7 @@ const appVersion = packageJson.version;
  * @global
  */
 let autoLauncher = new autoLaunch({
-    name: appProductName,
+    name: appName,
     isHidden: true,
     mac: {
         useLaunchAgent: true

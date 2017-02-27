@@ -31,6 +31,11 @@ const semverCompare = require('semver-compare');
 const { autoUpdater } = require('electron-updater');
 
 /**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
+
+/**
  * Modules
  * Internal
  * @global

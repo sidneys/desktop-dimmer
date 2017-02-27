@@ -27,6 +27,11 @@ const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
 
 /**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
+
+/**
  * Modules
  * Internal
  * @global
@@ -67,6 +72,7 @@ let persistConfiguration = () => {
             color: global.overlays[i].color
         };
     }
+
     electronSettings.setSync('overlays', savedOverlays);
 };
 

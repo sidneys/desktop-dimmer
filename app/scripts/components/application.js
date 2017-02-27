@@ -28,8 +28,13 @@ const Menubar = require('menubar');
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const electronSettings = require('electron-settings');
 const electronConnect = require('electron-connect');
+const electronSettings = require('electron-settings');
+
+/**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -132,12 +137,6 @@ let initializeSettings = () => {
     // Settings Defaults
     electronSettings.defaults(settingsDefaults);
     electronSettings.applyDefaultsSync();
-
-    // Settings Configuration
-    electronSettings.configure({
-        prettify: true,
-        atomicSaving: true
-    });
 };
 
 

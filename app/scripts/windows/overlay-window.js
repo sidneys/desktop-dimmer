@@ -25,10 +25,15 @@ const { BrowserWindow } = electron;
  * @global
  * @constant
  */
-const _ = require('lodash');
 const appRootPath = require('app-root-path').path;
 const electronConnect = require('electron-connect');
 const electronSettings = require('electron-settings');
+const _ = require('lodash');
+
+/**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
 
 /**
  * Modules

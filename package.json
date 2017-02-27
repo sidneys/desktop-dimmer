@@ -1,7 +1,7 @@
 {
   "name": "desktop-dimmer",
   "productName": "Desktop Dimmer",
-  "version": "2.5.0",
+  "version": "2.7.3",
   "description": "Enables darker-than-dark Desktop dimming for your displays",
   "license": "MIT",
   "homepage": "https://sidneys.github.io/desktop-dimmer",
@@ -36,18 +36,18 @@
   "dependencies": {
     "app-root-path": "^2.0.1",
     "appdirectory": "^0.1.0",
-    "auto-launch": "^5.0.1",
+    "auto-launch": "git://github.com/sidneys/node-auto-launch.git",
     "babel-cli": "^6.23.0",
     "babel-preset-electron": "^1.4.15",
     "chalk": "^1.1.3",
-    "color-picker": "git+https://github.com/purtuga/color-picker.git",
+    "color-picker": "git://github.com/tovic/color-picker.git",
     "electron-compile": "^6.1.2",
     "electron-compilers": "^5.5.1",
     "electron-connect": "^0.6.1",
     "electron-editor-context-menu": "^1.1.1",
     "electron-settings": "^2.2.2",
     "electron-squirrel-startup": "^1.0.0",
-    "electron-updater": "^1.7.1",
+    "electron-updater": "^1.8.1",
     "file-type": "^4.1.0",
     "fs-extra": "^2.0.0",
     "keypath": "^0.0.1",
@@ -112,15 +112,11 @@
     },
     "linux": {
       "target": [
-        "AppImage",
         "deb",
         "pacman",
         "rpm"
       ],
       "category": "Utility"
-    },
-    "AppImage": {
-      "includeRequiredLib": true
     },
     "deb": {
       "depends": [
