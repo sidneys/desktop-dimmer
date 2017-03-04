@@ -25,8 +25,14 @@ const { ipcRenderer, remote } = electron;
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const tinycolor = require('tinycolor2');
 const electronConnect = require('electron-connect');
+const electronSettings = require('electron-settings');
+const tinycolor = require('tinycolor2');
+
+/**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -54,6 +60,8 @@ let dom = {
     content: document.querySelector('.content'),
     inputList: document.querySelector('.display-control-list'),
     windowControls: {
+        disable: document.querySelector('.window-controls .disable'),
+        enable: document.querySelector('.window-controls .enable'),
         exit: document.querySelector('.window-controls .exit'),
         settings: document.querySelector('.window-controls .settings')
     },
@@ -126,8 +134,8 @@ let handleSizeChanges = () => {
 /**
  * Slider Movement
  */
-let addControls = () => {
-    logger.debug('controller', 'addControls()');
+let addDisplaySliders = () => {
+    logger.debug('controller', 'addDisplaySliders()');
 
     let displayList = electron.screen.getAllDisplays();
     let overlayList = [];
@@ -182,7 +190,7 @@ let addControls = () => {
 ipcRenderer.on('controller-show', () => {
     logger.debug('controller', 'ipcRenderer#controller-show');
 
-    addControls();
+    addDisplaySliders();
 });
 
 /**
@@ -205,6 +213,44 @@ dom.windowControls.settings.addEventListener('click', function() {
     windows.preferences.show();
 }, false);
 
+/**
+ * Controls: Enable
+ * @listens dom.windowControls.enable#MouseEvent:click
+ */
+dom.windowControls.enable.addEventListener('click', function() {
+    logger.debug('controller', 'enable#click');
+
+    dom.windowControls.enable.classList.add('hide');
+    dom.windowControls.disable.classList.remove('hide');
+
+    electronSettings.set('isEnabled', true).then(() => {
+        logger.debug('controller', 'isEnabled', electronSettings.getSync('isEnabled'));
+
+        for (let i in overlays) {
+            overlays[i].enable();
+        }
+    });
+}, false);
+
+/**
+ * Controls: Disable
+ * @listens dom.windowControls.disable#MouseEvent:click
+ */
+dom.windowControls.disable.addEventListener('click', function() {
+    logger.debug('controller', 'disable#click');
+
+    dom.windowControls.enable.classList.remove('hide');
+    dom.windowControls.disable.classList.add('hide');
+
+    electronSettings.set('isEnabled', false).then(() => {
+        logger.debug('controller', 'isEnabled', electronSettings.getSync('isEnabled'));
+
+        for (let i in overlays) {
+            overlays[i].disable();
+        }
+    });
+}, false);
+
 
 //noinspection JSValidateJSDoc
 /**
@@ -214,9 +260,13 @@ dom.windowControls.settings.addEventListener('click', function() {
 document.addEventListener('DOMContentLoaded', function() {
     logger.debug('controller', 'document#DOMContentLoaded');
 
-    addControls();
+    addDisplaySliders();
 
-    logger.debug(process.type)
+    if (electronSettings.getSync('isEnabled') === true) {
+        dom.windowControls.enable.classList.add('hide');
+    } else {
+        dom.windowControls.disable.classList.add('hide');
+    }
 
     // DEBUG
     if (isLivereload) {

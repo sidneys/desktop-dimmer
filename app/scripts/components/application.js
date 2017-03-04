@@ -17,7 +17,7 @@ const util = require('util');
  * @global
  * @constant
  */
-//const electron = require('electron');
+const { systemPreferences } = require('electron');
 const Menubar = require('menubar');
 
 
@@ -42,7 +42,6 @@ electronSettings.configure({ prettify: true });
  * @global
  * @constant
  */
-
 const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
@@ -62,7 +61,6 @@ const controllerUrl = url.format({
  * App
  * @global
  */
-const appName = packageJson.name;
 const appVersion = packageJson.version;
 
 /**
@@ -87,8 +85,9 @@ const menubar = Menubar({
     minHeight: 48,
     minWidth: 256,
     preloadWindow: true,
+    resizable: false,
     showDockIcon: isDebug,
-    vibrancy: 'dark',
+    vibrancy: systemPreferences.isDarkMode() ? 'dark' : 'light',
     width: 256,
 });
 global.menubar = menubar;
@@ -124,8 +123,9 @@ if ((os.platform() === 'linux')) {
  */
 let settingsDefaults = {
     currentVersion: appVersion,
-    overlays: {},
-    launchOnStartup: false
+    launchOnStartup: false,
+    isEnabled: true,
+    overlays: {}
 };
 
 /**
@@ -174,6 +174,8 @@ menubar.on('after-create-window', () => {
             electronConnect.client.create();
         }
     });
+
+    logger.info('application', 'menubar.tray.getBounds()', menubar.tray.getBounds());
 });
 
 /**
@@ -193,3 +195,18 @@ menubar.on('show', () => {
 
     menubar.window.webContents.send('controller-show');
 });
+
+/**
+ * Theme adaptation
+ */
+if (platformHelper.isMacOS) {
+    systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
+        logger.debug('application', 'systemPreferences.isDarkMode()', systemPreferences.isDarkMode());
+
+        if (systemPreferences.isDarkMode()) {
+            menubar.window.setVibrancy('dark');
+        } else {
+            menubar.window.setVibrancy('light');
+        }
+    });
+}
