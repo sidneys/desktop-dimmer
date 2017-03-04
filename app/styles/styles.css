@@ -15,6 +15,17 @@ html * {
     -webkit-font-smoothing: subpixel-antialiased;
 }
 
+/* draggable
+   ========================================================================== */
+
+.linux .window-controls {
+    -webkit-app-region: drag;
+}
+
+.linux .window-controls .button {
+    -webkit-app-region: no-drag;
+}
+
 /* ==========================================================================
    OVERLAY
    ========================================================================== */
@@ -51,7 +62,7 @@ html.controller {
 }
 
 .window-controls:hover {
-    transform: translate(-2.4rem,-0.1rem) scale(1.2);
+    transform: translate(-2.4rem, -0.1rem) scale(1.2);
 }
 
 .window-controls .button {
@@ -73,6 +84,11 @@ html.controller {
     transform: scale(1.5);
 }
 
+.window-controls .hide {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+}
 
 /* .display-control-list
    ========================================================================== */
@@ -120,7 +136,6 @@ output.alpha {
     float: left;
     font-size: 1.2rem;
 }
-
 
 /* input
    ========================================================================== */

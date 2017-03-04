@@ -25,8 +25,14 @@ const { ipcRenderer, remote } = electron;
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const tinycolor = require('tinycolor2');
 const electronConnect = require('electron-connect');
+const electronSettings = require('electron-settings');
+const tinycolor = require('tinycolor2');
+
+/**
+ * Settings Configuration
+ */
+electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -34,17 +40,17 @@ const electronConnect = require('electron-connect');
  * @global
  * @constant
  */
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const domHelper = require(path.join(appRootPath, 'app', 'scripts', 'utils', 'dom-helper'));
 const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 
 
 /**
  * @global
  */
-let controller = remote.getGlobal('menubar');
+let menubar = remote.getGlobal('menubar');
 let windows = remote.getGlobal('windows');
 let overlays = remote.getGlobal('overlays');
-
 
 /**
  * DOM Elements
@@ -53,7 +59,10 @@ let overlays = remote.getGlobal('overlays');
 let dom = {
     content: document.querySelector('.content'),
     inputList: document.querySelector('.display-control-list'),
+    windowHeader: document.querySelector('.window-controls'),
     windowControls: {
+        disable: document.querySelector('.window-controls .disable'),
+        enable: document.querySelector('.window-controls .enable'),
         exit: document.querySelector('.window-controls .exit'),
         settings: document.querySelector('.window-controls .settings')
     },
@@ -114,20 +123,20 @@ let handleAttributeChange = (displayId, attribute, value) => {
 let handleSizeChanges = () => {
     logger.debug('controller', 'handleSizeChanges()');
 
-    let currentWidth = controller.window.getSize()[0];
-    let currentHeight = controller.window.getSize()[1];
+    let currentWidth = menubar.window.getSize()[0];
+    let currentHeight = menubar.window.getSize()[1];
     let contentHeight = parseInt(dom.content.getBoundingClientRect().height);
 
     if (contentHeight !== currentHeight) {
-        controller.window.setSize(currentWidth, contentHeight);
+        menubar.window.setSize(currentWidth, contentHeight);
     }
 };
 
 /**
  * Slider Movement
  */
-let addControls = () => {
-    logger.debug('controller', 'addControls()');
+let addDisplaySliders = () => {
+    logger.debug('controller', 'addDisplaySliders()');
 
     let displayList = electron.screen.getAllDisplays();
     let overlayList = [];
@@ -180,29 +189,60 @@ let addControls = () => {
  * @listens Electron:ipcRenderer#controller-show
  */
 ipcRenderer.on('controller-show', () => {
-    logger.debug('controller', 'ipcRenderer#controller-show');
+    logger.log('controller', 'ipcRenderer#controller-show');
 
-    addControls();
+    addDisplaySliders();
 });
 
+
 /**
- * Controls: Quit
+ * dom.windowControls.exit#click
  * @listens dom.windowControls.exit#MouseEvent:click
  */
 dom.windowControls.exit.addEventListener('click', function() {
-    logger.debug('controller', 'exit#click');
+    logger.debug('controller', 'dom.windowControls.exit#click');
 
     remote.app.quit();
 }, false);
 
 /**
- * Controls: Open Settings
+ * dom.windowControls.settings#click
  * @listens dom.windowControls.settings#MouseEvent:click
  */
 dom.windowControls.settings.addEventListener('click', function() {
-    logger.debug('controller', 'settings#click');
+    logger.debug('controller', 'dom.windowControls.settings#click');
 
     windows.preferences.show();
+}, false);
+
+/**
+ * dom.windowControls.enable#click
+ * @listens dom.windowControls.enable#MouseEvent:click
+ */
+dom.windowControls.enable.addEventListener('click', function() {
+    logger.debug('controller', 'dom.windowControls.enable#click');
+
+    dom.windowControls.enable.classList.add('hide');
+    dom.windowControls.disable.classList.remove('hide');
+
+    electronSettings.set('isEnabled', true).then(() => {
+        for (let i in overlays) { overlays[i].enable(); }
+    });
+}, false);
+
+/**
+ * dom.windowControls.disable#click
+ * @listens dom.windowControls.disable#MouseEvent:click
+ */
+dom.windowControls.disable.addEventListener('click', function() {
+    logger.debug('controller', 'dom.windowControls.disable#click');
+
+    dom.windowControls.enable.classList.remove('hide');
+    dom.windowControls.disable.classList.add('hide');
+
+    electronSettings.set('isEnabled', false).then(() => {
+        for (let i in overlays) { overlays[i].disable(); }
+    });
 }, false);
 
 
@@ -214,9 +254,17 @@ dom.windowControls.settings.addEventListener('click', function() {
 document.addEventListener('DOMContentLoaded', function() {
     logger.debug('controller', 'document#DOMContentLoaded');
 
-    addControls();
+    // Add platform name to <html>
+    domHelper.addPlatformClass();
 
-    logger.debug(process.type)
+    // Add slider controls
+    addDisplaySliders();
+
+    if (electronSettings.getSync('isEnabled') === true) {
+        dom.windowControls.enable.classList.add('hide');
+    } else {
+        dom.windowControls.disable.classList.add('hide');
+    }
 
     // DEBUG
     if (isLivereload) {

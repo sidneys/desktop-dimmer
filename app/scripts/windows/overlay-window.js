@@ -89,7 +89,7 @@ class OverlayWindow extends BrowserWindow {
 
         this.setColor('transparent');
         this.setAlpha(0);
-        this.setSize();
+        this.setFullscreen();
         this.setForeground();
         this.loadURL(windowUrl);
 
@@ -103,6 +103,17 @@ class OverlayWindow extends BrowserWindow {
             logger.debug('overlay-window', 'overlay:dom-ready');
 
             this.show();
+
+            electronSettings.get('isEnabled').then((isEnabled) => {
+                logger.debug('overlay-window', 'isEnabled', isEnabled);
+
+                if (isEnabled) {
+                    this.enable();
+                } else {
+                    this.disable();
+                }
+            });
+
             this.restoreSettings();
 
             // DEBUG
@@ -130,21 +141,38 @@ class OverlayWindow extends BrowserWindow {
         });
     }
 
-    setSize() {
-        logger.debug('overlay-window', 'setSize()');
+    setFullscreen() {
+        logger.debug('overlay-window', 'setFullscreen()');
 
         this.setBounds({
             x: this.display.bounds.x,
             y: this.display.bounds.y,
-            width: this.display.bounds.width,
-            height: this.display.bounds.height,
-        }, true);
+            width: (this.display.bounds.width + 1),
+            height: (this.display.bounds.height + 1)
+        }, false);
+    }
+
+    setHidden() {
+        logger.debug('overlay-window', 'setHidden()');
+
+        this.setBounds({
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1
+        }, false);
     }
 
     setForeground() {
         logger.debug('overlay-window', 'setForeground()');
 
         this.setAlwaysOnTop(true, 'screen-saver');
+    }
+
+    setBackground() {
+        logger.debug('overlay-window', 'setBackground()');
+
+        this.setAlwaysOnTop(false, 'screen-saver');
     }
 
     restoreSettings() {
@@ -172,6 +200,19 @@ class OverlayWindow extends BrowserWindow {
         this.color = value;
         this.webContents.send('overlay-update', this.id, 'color', value);
         this.emit('update', this.id, 'color', value);
+    }
+
+    enable() {
+        logger.debug('overlay-window', 'enable()');
+
+        this.setForeground();
+        this.setFullscreen();
+    }
+
+    disable() {
+        logger.debug('overlay-window', 'disable()');
+
+        this.setHidden();
     }
 }
 

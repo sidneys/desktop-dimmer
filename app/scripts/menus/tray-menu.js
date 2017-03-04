@@ -1,5 +1,6 @@
 'use strict';
 
+
 /**
  * Modules
  * Node
@@ -15,15 +16,14 @@ const path = require('path');
  * @constant
  */
 const electron = require('electron');
-const { Menu } = electron;
+const { app, BrowserWindow, Menu } = electron;
 
 /**
  * Modules
  * External
  * @global
- * @constant
+ * @const
  */
-const menubar = require('menubar');
 const appRootPath = require('app-root-path').path;
 
 /**
@@ -32,48 +32,68 @@ const appRootPath = require('app-root-path').path;
  * @global
  * @constant
  */
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
 const packageJson = require(path.join(appRootPath, 'package.json'));
+
 
 /**
  * App
  * @global
+ * @constant
  */
 const appProductName = packageJson.productName || packageJson.name;
 const appVersion = packageJson.version;
 
 
 /**
- * Tray Menu Template
+ * @global
  */
-let trayMenuTemplate = [
-    {
-        type: 'normal',
-        enabled: false,
-        label: appProductName + ' v' + appVersion
-    },
-    {
-        label: 'Show',
-        enabled: true,
-        click() {
-            global.menubar.window.show();
+let tray = {};
+let trayMenu = {};
+
+
+/**
+ * Tray Menu Template
+ * @global
+ */
+let getTrayMenuTemplate = () => {
+    return [
+        {
+            id: 'productName',
+            label: `Show ${appProductName}`,
+            click() {
+                let mainWindow = global.menubar.window || BrowserWindow.getAllWindows()[0];
+                mainWindow.show();
+            }
+        },
+        {
+            id: 'currentVersion',
+            label: `Version ${appVersion}`,
+            type: 'normal',
+            enabled: false
+        },
+        {
+            type: 'separator'
+        },
+        {
+            label: `Quit ${appProductName}`,
+            click() {
+                app.quit();
+            }
         }
-    },
-    {
-        label: 'Quit',
-        enabled: true,
-        click() {
-            global.menubar.app.quit();
-        }
-    }
-];
+    ];
+};
 
 /**
  *  Add Menu to Tray
  */
-let addTrayMenu = (trayReference) => {
-    let appTrayMenu = Menu.buildFromTemplate(trayMenuTemplate);
-    trayReference.setContextMenu(appTrayMenu);
-    return appTrayMenu;
+let registerMenu = (appTray) => {
+    logger.debug('tray-menu', 'registerMenu()');
+
+    tray = appTray;
+    trayMenu = Menu.buildFromTemplate(getTrayMenuTemplate());
+
+    tray.setContextMenu(trayMenu);
 };
 
 
@@ -81,5 +101,7 @@ let addTrayMenu = (trayReference) => {
  * @exports
  */
 module.exports = {
-    add: addTrayMenu
+    tray: tray,
+    menu: trayMenu,
+    registerMenu: registerMenu
 };

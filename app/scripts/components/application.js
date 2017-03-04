@@ -6,7 +6,6 @@
  * @global
  * @constant
  */
-const os = require('os');
 const path = require('path');
 const url = require('url');
 const util = require('util');
@@ -17,7 +16,8 @@ const util = require('util');
  * @global
  * @constant
  */
-//const electron = require('electron');
+const electron = require('electron');
+const { systemPreferences } = electron;
 const Menubar = require('menubar');
 
 
@@ -42,7 +42,6 @@ electronSettings.configure({ prettify: true });
  * @global
  * @constant
  */
-
 const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
@@ -62,7 +61,6 @@ const controllerUrl = url.format({
  * App
  * @global
  */
-const appName = packageJson.name;
 const appVersion = packageJson.version;
 
 /**
@@ -87,9 +85,10 @@ const menubar = Menubar({
     minHeight: 48,
     minWidth: 256,
     preloadWindow: true,
+    resizable: false,
     showDockIcon: isDebug,
-    vibrancy: 'dark',
-    width: 256,
+    vibrancy: systemPreferences.isDarkMode() ? 'dark' : 'light',
+    width: 256
 });
 global.menubar = menubar;
 
@@ -111,7 +110,7 @@ const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'wind
  * @global
  */
 menubar.app.disableHardwareAcceleration();
-if ((os.platform() === 'linux')) {
+if (platformHelper.isLinux) {
     menubar.app.commandLine.appendSwitch('enable-transparent-visuals');
 }
 
@@ -119,13 +118,15 @@ if ((os.platform() === 'linux')) {
 /**
  * Settings Defaults
  * @property {String} currentVersion - Application Version
- * @property {Object} overlays - Hashmap
  * @property {Boolean} launchOnStartup - Auto launch
+ * @property {Boolean} isEnabled - Overlays are enabled
+ * @property {Object} overlays - Overlay hashmap
  */
 let settingsDefaults = {
     currentVersion: appVersion,
-    overlays: {},
-    launchOnStartup: false
+    launchOnStartup: false,
+    isEnabled: true,
+    overlays: {}
 };
 
 /**
@@ -141,7 +142,7 @@ let initializeSettings = () => {
 
 
 /**
- * @listens menubar#quit
+ * @listens menubar.app#before-quit
  */
 menubar.app.on('before-quit', () => {
     logger.debug('application', electronSettings.getSettingsFilePath());
@@ -156,15 +157,48 @@ menubar.on('after-create-window', () => {
 
     initializeSettings();
 
+    /** Linux */
     if (platformHelper.isLinux) {
-        trayMenu.add(menubar.tray);
+        trayMenu.registerMenu(menubar.tray);
     }
+
+    /**
+     * @listens menubar.window.on#show
+     */
+    menubar.window.on('show', () => {
+        logger.debug('application', 'menubar.window.on:show');
+
+        menubar.window.webContents.send('controller-show');
+
+        /** Linux */
+        if (platformHelper.isLinux) {
+            const cursorPosition = electron.screen.getCursorScreenPoint();
+            const targetPosition = {
+                x: cursorPosition.x - (menubar.window.getBounds().width + 20),
+                y: cursorPosition.y
+            };
+
+            menubar.window.setPosition(targetPosition.x, targetPosition.y);
+
+            // DEBUG
+            logger.debug('application', 'targetPosition', util.inspect(targetPosition));
+        }
+    });
+
+    /**
+     * @listens menubar.window#hide
+     */
+    menubar.window.on('hide', () => {
+        logger.debug('application', 'menubar.window:hide');
+
+        menubar.window.webContents.send('controller-hide');
+    });
 
     /**
      * @listens Electron#WebContents:dom-ready
      */
     menubar.window.webContents.on('dom-ready', () => {
-        logger.debug('application', 'menubar:dom-ready');
+        logger.debug('application', 'menubar.window.webContents:dom-ready');
 
         // DEBUG
         if (isDebug) {
@@ -177,19 +211,29 @@ menubar.on('after-create-window', () => {
 });
 
 /**
- * @listens menubar#hide
+ * @listens menubar.app#before-quit
  */
-menubar.on('hide', () => {
-    logger.debug('application', 'menubar:hide');
+menubar.app.on('before-quit', () => {
+    logger.debug('application', 'menubar.app:before-quit');
 
-    menubar.window.webContents.send('controller-hide');
+    // DEBUG
+    logger.debug('application', electronSettings.getSettingsFilePath());
+    logger.debug('application', util.inspect(electronSettings.getSync()));
 });
+
 
 /**
- * @listens menubar#show
+ * macOS
  */
-menubar.on('show', () => {
-    logger.debug('application', 'menubar:show');
+if (platformHelper.isMacOS) {
+    // Adapt to dark / light mode
+    systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
+        logger.debug('application', 'systemPreferences.isDarkMode()', systemPreferences.isDarkMode());
 
-    menubar.window.webContents.send('controller-show');
-});
+        if (systemPreferences.isDarkMode()) {
+            menubar.window.setVibrancy('dark');
+        } else {
+            menubar.window.setVibrancy('light');
+        }
+    });
+}
