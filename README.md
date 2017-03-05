@@ -129,7 +129,7 @@ sudo apt-get install wine mono fakeroot dpkg
 
 The process is managed by a custom layer of node scripts and Electron-optimized configuration templates.
 Completed Installation packages are deployed to [GitHub Releases](https://github.com/sidneys/desktop-dimmer/releases). Builds for all platforms and architectures take about 5 minutes.
-Backed by the open-source-friendly guys at [Travis](https://travis-ci.org/) and AppVeyor](https://ci.appveyor.com/) and running [electron-packager](https://github.com/electron-userland/electron-packager) under the hood.
+Backed by the open-source-friendly guys at [Travis](https://travis-ci.org/) and [AppVeyor](https://ci.appveyor.com/) and running [electron-packager](https://github.com/electron-userland/electron-packager) under the hood.
 
 ### Setup
 
