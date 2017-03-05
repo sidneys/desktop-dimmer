@@ -1,4 +1,4 @@
-# Desktop Dimmer [![Beta](https://img.shields.io/badge/status-alpha-blue.svg?style=flat)]() [![travis](http://img.shields.io/travis/sidneys/desktop-dimmer.svg?style=flat)](http://travis-ci.org/sidneys/desktop-dimmer) [![appveyor](https://ci.appveyor.com/api/projects/status/oc57pq7hfslqg3ru?svg=true)](https://ci.appveyor.com/project/sidneys/desktop-dimmer) [![npm](https://img.shields.io/npm/v/desktop-dimmer.svg?style=flat)](https://npmjs.com/package/desktop-dimmer) [![dependencies](https://img.shields.io/david/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer) [![devDependencies](https://img.shields.io/david/dev/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer)
+# Desktop Dimmer [![Beta](https://img.shields.io/badge/status-alpha-blue.svg?style=flat)]() [![travis](https://img.shields.io/travis/sidneys/desktop-dimmer.svg?style=flat)](https://travis-ci.org/sidneys/desktop-dimmer) [![appveyor](https://ci.appveyor.com/api/projects/status/oc57pq7hfslqg3ru?svg=true)](https://ci.appveyor.com/project/sidneys/desktop-dimmer) [![npm](https://img.shields.io/npm/v/desktop-dimmer.svg?style=flat)](https://npmjs.com/package/desktop-dimmer) [![dependencies](https://img.shields.io/david/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer) [![devDependencies](https://img.shields.io/david/dev/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer)
 
 <p align="center">
   <img height="250px" src="https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/graphics/icon.png"/><br><br>
@@ -129,14 +129,14 @@ sudo apt-get install wine mono fakeroot dpkg
 
 The process is managed by a custom layer of node scripts and Electron-optimized configuration templates.
 Completed Installation packages are deployed to [GitHub Releases](https://github.com/sidneys/desktop-dimmer/releases). Builds for all platforms and architectures take about 5 minutes.
-Backed by the open-source-friendly guys at [Travis](http://travis-ci.org/) and AppVeyor](https://ci.appveyor.com/) and running [electron-packager](https://github.com/electron-userland/electron-packager) under the hood.
+Backed by the open-source-friendly guys at [Travis](https://travis-ci.org/) and AppVeyor](https://ci.appveyor.com/) and running [electron-packager](https://github.com/electron-userland/electron-packager) under the hood.
 
 ### Setup
 
 1.  [Fork](https://github.com/sidneys/desktop-dimmer/fork) the repo
 2.  Generate your GitHub [Personal Access Token](https://github.com/settings/tokens) using "repo" as scope. Copy it to the clipboard.
 3.  **macOS + Linux**
-     1. Sign in to [Travis](http://travis-ci.org/) using GitHub.
+     1. Sign in to [Travis](https://travis-ci.org/) using GitHub.
      2. Open your [Travis Profile](https://travis-ci.org/profile), click "Sync Account" and wait for the process to complete.
      3. Find this repository in the list, enable it and click "⚙" to open its settings.
      4. Create a new Environment Variable named **GITHUB_TOKEN**. Paste your Token from step 2 as *value*. 
@@ -171,11 +171,11 @@ Backed by the open-source-friendly guys at [Travis](http://travis-ci.org/) and A
 
 ## <a name="contribute"/></a> Contact ![Contributions Wanted](https://img.shields.io/badge/contributions-wanted-red.svg?style=flat)
 
-* [Gitter](http://gitter.im/sidneys/desktop-dimmer) Developer Chat
-* [Issues](http;//github.com/sidneys/desktop-dimmer/issues) File, track and discuss features and issues
-* [Wiki](http;//github.com/sidneys/desktop-dimmer/wiki) Read or contribute to the project Wiki
+* [Gitter](https://gitter.im/sidneys/desktop-dimmer) Developer Chat
+* [Issues](https://github.com/sidneys/desktop-dimmer/issues) File, track and discuss features and issues
+* [Wiki](https://github.com/sidneys/desktop-dimmer/wiki) Read or contribute to the project Wiki
 
 
 ## <a name="author"/></a> Author
 
-[sidneys](http://sidneys.github.io) 2016
+[sidneys](https://sidneys.github.io) 2016
