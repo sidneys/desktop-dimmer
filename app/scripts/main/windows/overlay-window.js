@@ -26,14 +26,8 @@ const { BrowserWindow } = electron;
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const electronConnect = require('electron-connect');
 const electronSettings = require('electron-settings');
 const _ = require('lodash');
-
-/**
- * Settings Configuration
- */
-electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -41,9 +35,8 @@ electronSettings.configure({ prettify: true });
  * @global
  * @constant
  */
-const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
-const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const isDebug = require(path.join(appRootPath, 'lib', 'is-env'))('debug');
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
 
 
@@ -53,7 +46,7 @@ const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'))
  * @constant
  */
 const appTrayIconDefault = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-default${platformHelper.templateImageExtension(platformHelper.name)}`);
-const appTrayIconTransparent = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-transparent${platformHelper.templateImageExtension(platformHelper.name)}`);
+const appTrayIconTranslucent = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-translucent${platformHelper.templateImageExtension(platformHelper.name)}`);
 const windowUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'overlay.html') });
 
 
@@ -79,13 +72,13 @@ class OverlayWindow extends BrowserWindow {
         this.displayId = this.display.id;
 
         // Set default icon
-        global.menubar.tray.setImage(appTrayIconTransparent);
+        global.menubar.tray.setImage(appTrayIconTranslucent);
 
         this.init(display);
     }
 
     init() {
-        logger.debug('overlay-window', 'init()');
+        logger.debug('init');
 
         this.setColor('transparent');
         this.setAlpha(0);
@@ -95,39 +88,30 @@ class OverlayWindow extends BrowserWindow {
 
         /** @listens Electron#BrowserWindow:closed */
         this.on('closed', () => {
-            logger.debug('overlay-window', 'overlay:closed');
+            logger.debug('overlay:closed');
         });
 
         /** @listens Electron#WebContents:dom-ready */
         this.webContents.on('dom-ready', () => {
-            logger.debug('overlay-window', 'overlay:dom-ready');
+            logger.debug('overlay:dom-ready');
 
             this.show();
 
-            electronSettings.get('isEnabled').then((isEnabled) => {
-                logger.debug('overlay-window', 'isEnabled', isEnabled);
+            let isEnabled = electronSettings.get('isEnabled');
+            logger.debug('isEnabled', isEnabled);
 
-                if (isEnabled) {
-                    this.enable();
-                } else {
-                    this.disable();
-                }
-            });
+            if (isEnabled) {
+                this.enable();
+            } else {
+                this.disable();
+            }
 
             this.restoreSettings();
-
-            // DEBUG
-            if (isDebug) {
-                this.webContents.openDevTools({ mode: 'detach' });
-            }
-            if (isLivereload) {
-                electronConnect.client.create();
-            }
         });
 
         /** @listens Electron#BrowserWindow:update */
         this.on('update', () => {
-            logger.debug('overlay-window', 'overlay:update');
+            logger.debug('overlay:update');
 
             let pristineOverlays = _.filter(global.overlays, function(overlay) {
                 return (overlay.alpha === 0);
@@ -136,24 +120,24 @@ class OverlayWindow extends BrowserWindow {
             if (pristineOverlays.length !== Object.keys(global.overlays).length) {
                 global.menubar.tray.setImage(appTrayIconDefault);
             } else {
-                global.menubar.tray.setImage(appTrayIconTransparent);
+                global.menubar.tray.setImage(appTrayIconTranslucent);
             }
         });
     }
 
     setFullscreen() {
-        logger.debug('overlay-window', 'setFullscreen()');
+        logger.debug('setFullscreen');
 
         this.setBounds({
             x: this.display.bounds.x,
             y: this.display.bounds.y,
-            width: (this.display.bounds.width + 1),
-            height: (this.display.bounds.height + 1)
+            width: isDebug ? parseInt(this.display.bounds.width/4) : (this.display.bounds.width + 1),
+            height: isDebug ? parseInt(this.display.bounds.height/4) : (this.display.bounds.height + 1),
         }, false);
     }
 
     setHidden() {
-        logger.debug('overlay-window', 'setHidden()');
+        logger.debug('setHidden');
 
         this.setBounds({
             x: 0,
@@ -164,38 +148,41 @@ class OverlayWindow extends BrowserWindow {
     }
 
     setForeground() {
-        logger.debug('overlay-window', 'setForeground()');
+        logger.debug('setForeground');
 
-        this.setAlwaysOnTop(true, 'screen-saver');
+        isDebug ? this.setAlwaysOnTop(false) : this.setAlwaysOnTop(true, 'screen-saver', 2);
     }
 
     setBackground() {
-        logger.debug('overlay-window', 'setBackground()');
+        logger.debug('setBackground');
 
-        this.setAlwaysOnTop(false, 'screen-saver');
+        this.setAlwaysOnTop(false);
     }
 
     restoreSettings() {
-        logger.debug('overlay-window', 'restoreSettings()');
+        logger.debug('restoreSettings');
 
-        electronSettings.get('overlays').then((savedOverlays) => {
-            if (savedOverlays[this.displayId]) {
-                this.setAlpha(savedOverlays[this.displayId].alpha);
-                this.setColor(savedOverlays[this.displayId].color);
-            }
-        });
+        let savedOverlays = electronSettings.get('overlays');
+        if (savedOverlays[this.displayId]) {
+            this.setAlpha(savedOverlays[this.displayId].alpha);
+            this.setColor(savedOverlays[this.displayId].color);
+        }
     }
 
     setAlpha(value) {
-        logger.debug('overlay-window', 'setAlpha()');
+        logger.debug('setAlpha');
 
-        this.alpha = parseFloat(value);
-        this.webContents.send('overlay-update', this.id, 'alpha', value);
-        this.emit('update', this.id, 'alpha', value);
+        let debounced = _.debounce(() => {
+            this.alpha = parseFloat(value);
+            this.webContents.send('overlay-update', this.id, 'alpha', value);
+            this.emit('update', this.id, 'alpha', value);
+        }, 150);
+
+        debounced();
     }
 
     setColor(value) {
-        logger.debug('overlay-window', 'setColor()');
+        logger.debug('setColor');
 
         this.color = value;
         this.webContents.send('overlay-update', this.id, 'color', value);
@@ -203,14 +190,14 @@ class OverlayWindow extends BrowserWindow {
     }
 
     enable() {
-        logger.debug('overlay-window', 'enable()');
+        logger.debug('enable');
 
         this.setForeground();
         this.setFullscreen();
     }
 
     disable() {
-        logger.debug('overlay-window', 'disable()');
+        logger.debug('disable');
 
         this.setHidden();
     }

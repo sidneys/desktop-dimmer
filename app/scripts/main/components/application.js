@@ -6,6 +6,7 @@
  * @global
  * @constant
  */
+const EventEmitter = require('events');
 const path = require('path');
 const url = require('url');
 const util = require('util');
@@ -27,14 +28,16 @@ const Menubar = require('menubar');
  * @global
  * @constant
  */
-const appRootPath = require('app-root-path').path;
-const electronConnect = require('electron-connect');
+const _ = require('lodash');
+const appRootPath = require('app-root-path');
 const electronSettings = require('electron-settings');
 
 /**
- * Settings Configuration
+ * Modules
+ * Configuration
  */
-electronSettings.configure({ prettify: true });
+EventEmitter.defaultMaxListeners = Infinity;
+appRootPath.setPath(path.join(__dirname, '..', '..', '..', '..'));
 
 /**
  * Modules
@@ -42,11 +45,10 @@ electronSettings.configure({ prettify: true });
  * @global
  * @constant
  */
-const packageJson = require(path.join(appRootPath, 'package.json'));
-const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
-const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
-const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+const packageJson = require(path.join(appRootPath.path, 'package.json'));
+const platformHelper = require(path.join(appRootPath.path, 'lib', 'platform-helper'));
+const logger = require(path.join(appRootPath.path, 'lib', 'logger'))({ write: true });
+const isDebug = require(path.join(appRootPath.path, 'lib', 'is-env'))('debug');
 
 
 /**
@@ -54,7 +56,7 @@ const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
  * @global
  */
 const controllerUrl = url.format({
-    protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'controller.html')
+    protocol: 'file:', pathname: path.join(appRootPath.path, 'app', 'html', 'controller.html')
 });
 
 /**
@@ -67,7 +69,7 @@ const appVersion = packageJson.version;
  * Paths
  * @global
  */
-const appTrayIconEnabled = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-default${platformHelper.templateImageExtension(platformHelper.name)}`);
+const appTrayIconEnabled = path.join(appRootPath.path, 'icons', platformHelper.type, `icon-tray-default${platformHelper.templateImageExtension(platformHelper.name)}`);
 
 /**
  * Menubar Controller (Menubar)
@@ -98,11 +100,12 @@ global.menubar = menubar;
  * @global
  * @constant
  */
-const trayMenu = require(path.join(appRootPath, 'app', 'scripts', 'menus', 'tray-menu'));
-const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager')); // jshint ignore:line
-const screenManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'screen-manager')); // jshint ignore:line
-const updaterService = require(path.join(appRootPath, 'app', 'scripts', 'services', 'updater-service'));  // jshint ignore:line
-const preferencesWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'preferences-window'));  // jshint ignore:line
+const trayMenu = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'menus', 'tray-menu'));
+const overlayManager = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'components', 'overlay-manager')); // jshint ignore:line
+const screenManager = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'components', 'screen-manager')); // jshint ignore:line
+const updaterService = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'services', 'updater-service'));  // jshint ignore:line
+const preferencesWindow = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'windows', 'preferences-window'));  // jshint ignore:line
+const debugService = require(path.join(appRootPath.path, 'app', 'scripts', 'main', 'services', 'debug-service')); // jshint ignore:line
 
 
 /**
@@ -117,15 +120,12 @@ if (platformHelper.isLinux) {
 
 /**
  * Settings Defaults
- * @property {String} currentVersion - Application Version
- * @property {Boolean} launchOnStartup - Auto launch
- * @property {Boolean} isEnabled - Overlays are enabled
- * @property {Object} overlays - Overlay hashmap
  */
 let settingsDefaults = {
-    currentVersion: appVersion,
+    internalVersion: appVersion,
     launchOnStartup: false,
     isEnabled: true,
+    releaseNotes: '',
     overlays: {}
 };
 
@@ -133,11 +133,14 @@ let settingsDefaults = {
  * Init Settings
  */
 let initializeSettings = () => {
-    logger.debug('application', 'initializeSettings()');
+    logger.debug('initializeSettings');
+    
+    let configuration = electronSettings.getAll();
+    let configurationDefaults = settingsDefaults;
 
-    // Settings Defaults
-    electronSettings.defaults(settingsDefaults);
-    electronSettings.applyDefaultsSync();
+    electronSettings.setAll(_.defaultsDeep(configuration, configurationDefaults));
+
+    logger.debug(electronSettings.getAll());
 };
 
 
@@ -145,15 +148,15 @@ let initializeSettings = () => {
  * @listens menubar.app#before-quit
  */
 menubar.app.on('before-quit', () => {
-    logger.debug('application', electronSettings.getSettingsFilePath());
-    logger.debug('application', util.inspect(electronSettings.getSync()));
+    logger.info('settings', electronSettings.getAll());
+    logger.info('file', electronSettings.file());
 });
 
 /**
  * @listens menubar#after-create-window
  */
 menubar.on('after-create-window', () => {
-    logger.debug('application', 'menubar:after-create-window');
+    logger.debug('menubar:after-create-window');
 
     initializeSettings();
 
@@ -166,7 +169,7 @@ menubar.on('after-create-window', () => {
      * @listens menubar.window.on#show
      */
     menubar.window.on('show', () => {
-        logger.debug('application', 'menubar.window.on:show');
+        logger.debug('menubar.window.on:show');
 
         menubar.window.webContents.send('controller-show');
 
@@ -181,7 +184,7 @@ menubar.on('after-create-window', () => {
             menubar.window.setPosition(targetPosition.x, targetPosition.y);
 
             // DEBUG
-            logger.debug('application', 'targetPosition', util.inspect(targetPosition));
+            logger.debug('targetPosition', util.inspect(targetPosition));
         }
     });
 
@@ -189,7 +192,7 @@ menubar.on('after-create-window', () => {
      * @listens menubar.window#hide
      */
     menubar.window.on('hide', () => {
-        logger.debug('application', 'menubar.window:hide');
+        logger.debug('menubar.window:hide');
 
         menubar.window.webContents.send('controller-hide');
     });
@@ -198,27 +201,8 @@ menubar.on('after-create-window', () => {
      * @listens Electron#WebContents:dom-ready
      */
     menubar.window.webContents.on('dom-ready', () => {
-        logger.debug('application', 'menubar.window.webContents:dom-ready');
-
-        // DEBUG
-        if (isDebug) {
-            menubar.window.webContents.openDevTools({ mode: 'detach' });
-        }
-        if (isLivereload) {
-            electronConnect.client.create();
-        }
+        logger.debug('menubar.window.webContents:dom-ready');
     });
-});
-
-/**
- * @listens menubar.app#before-quit
- */
-menubar.app.on('before-quit', () => {
-    logger.debug('application', 'menubar.app:before-quit');
-
-    // DEBUG
-    logger.debug('application', electronSettings.getSettingsFilePath());
-    logger.debug('application', util.inspect(electronSettings.getSync()));
 });
 
 
@@ -228,7 +212,7 @@ menubar.app.on('before-quit', () => {
 if (platformHelper.isMacOS) {
     // Adapt to dark / light mode
     systemPreferences.subscribeNotification('AppleInterfaceThemeChangedNotification', () => {
-        logger.debug('application', 'systemPreferences.isDarkMode()', systemPreferences.isDarkMode());
+        logger.debug('systemPreferences.isDarkMode()', systemPreferences.isDarkMode());
 
         if (systemPreferences.isDarkMode()) {
             menubar.window.setVibrancy('dark');

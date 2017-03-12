@@ -1,7 +1,7 @@
 {
   "name": "desktop-dimmer",
   "productName": "Desktop Dimmer",
-  "version": "2.9.0",
+  "version": "3.1.2",
   "description": "Enables darker-than-dark Desktop dimming for your displays",
   "license": "MIT",
   "homepage": "https://sidneys.github.io/desktop-dimmer",
@@ -18,7 +18,7 @@
     "url": "https://github.com/sidneys/desktop-dimmer/issues"
   },
   "engines": {
-    "node": ">=7.0.0"
+    "node": ">=8.0.0"
   },
   "os": [
     "darwin",
@@ -37,52 +37,58 @@
     "app-root-path": "^2.0.1",
     "appdirectory": "^0.1.0",
     "auto-launch": "git://github.com/sidneys/node-auto-launch.git#master",
-    "babel-cli": "^6.23.0",
+    "babel-cli": "^6.24.1",
     "babel-preset-electron": "^1.4.15",
-    "chalk": "^1.1.3",
+    "chalk": "^2.0.1",
+    "chalkline": "0.0.5",
     "color-picker": "git://github.com/tovic/color-picker.git#master",
-    "electron-compile": "^6.1.3",
-    "electron-compilers": "^5.5.1",
-    "electron-connect": "^0.6.1",
     "electron-editor-context-menu": "^1.1.1",
-    "electron-settings": "^2.2.2",
-    "electron-squirrel-startup": "^1.0.0",
-    "electron-updater": "^1.8.2",
-    "file-type": "^4.1.0",
-    "fs-extra": "^2.0.0",
+    "electron-settings": "^3.1.1",
+    "electron-updater": "^2.4.4",
+    "file-type": "^5.2.0",
+    "file-url": "^2.0.2",
+    "fs-extra": "^3.0.1",
     "keypath": "^0.0.1",
     "lodash": "^4.17.4",
     "menubar": "git://github.com/sidneys/menubar.git#add-taskbar-support",
+    "minimist": "^1.2.0",
+    "moment": "^2.18.1",
+    "parse-semver": "^1.1.1",
+    "present": "^1.0.0",
     "read-chunk": "^2.0.0",
     "semver-compare": "^1.0.0",
-    "tinycolor2": "latest"
+    "simple-reload": "0.0.4",
+    "tinycolor2": "latest",
+    "try-require": "^1.2.1"
   },
   "devDependencies": {
-    "electron": "1.4.14",
-    "electron-builder": "11.5.1",
-    "electron-builder-squirrel-windows": "11.5.0",
-    "fkill": "^4.1.0",
-    "glob": "^7.1.1",
+    "electron": "^1.7.4",
+    "electron-builder": "^19.13.0",
+    "electron-connect": "^0.6.1",
+    "electron-prebuilt-compile": "^1.7.3",
+    "fkill": "^5.0.0",
+    "git-branch": "^1.0.0",
+    "glob": "^7.1.2",
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
-    "minimist": "^1.2.0",
-    "progress": "^1.1.8",
-    "publish-release": "^1.3.3"
+    "hash-files": "^1.1.1",
+    "is-ci": "^1.0.10",
+    "json2md": "^1.5.8",
+    "progress": "^2.0.0",
+    "publish-release": "^1.3.3",
+    "yamljs": "^0.3.0"
   },
-  "main": "./app/es6-init.js",
+  "main": "./app/scripts/main/components/application.js",
   "bin": {
     "desktop-dimmer": "./bin/cli.js"
   },
   "scripts": {
-    "deploy:github": "node ./lib/deploy-github.js -- ",
-    "start": "./node_modules/.bin/electron ./app/es6-init.js",
-    "start:dev": "./node_modules/.bin/electron ./app/es6-init.js",
-    "start:livereload": "./node_modules/.bin/gulp livereload",
-    "build": "node ./lib/build.js --",
-    "localsetup": "./node_modules/.bin/babel-node ./lib/localsetup.js -- ",
-    "localsetup:dev": "./node_modules/.bin/babel-node ./lib/localsetup.js -- ",
-    "localsetup:rebuild": "./node_modules/.bin/babel-node ./lib/localsetup.js -- ",
-    "localsetup:rebuild:dev": "./node_modules/.bin/babel-node ./lib/localsetup.js -- "
+    "build": "node ./lib/build.js",
+    "deploy": "node ./lib/deploy.js",
+    "livereload": "./node_modules/.bin/gulp",
+    "localsetup": "./node_modules/.bin/babel-node ./lib/localsetup.js",
+    "releasenotes": "node ./lib/releasenotes.js",
+    "dev": "./node_modules/.bin/electron ./app/scripts/main/components/application.js"
   },
   "build": {
     "appId": "de.sidneys.desktop-dimmer",
@@ -97,68 +103,42 @@
       "!website"
     ],
     "mac": {
+      "category": "public.app-category.utilities",
       "icon": "./icons/darwin/icon.icns",
       "target": [
         "dmg",
         "zip"
-      ],
-      "category": "public.app-category.utilities"
+      ]
     },
     "win": {
       "icon": "./icons/win32/icon.ico",
       "target": [
-        "squirrel"
+        "nsis"
       ]
     },
     "linux": {
+      "category": "Utility",
+      "icon": "./icons/linux",
       "target": [
+        "AppImage",
         "deb",
         "pacman",
         "rpm"
-      ],
-      "category": "Utility"
-    },
-    "deb": {
-      "depends": [
-        "libappindicator1",
-        "libgconf-2-4",
-        "libnotify-bin",
-        "libnotify4"
       ]
     },
     "dmg": {
       "background": "./icons/darwin/background-setup.png",
       "icon": "./icons/darwin/icon-setup.icns"
     },
-    "pacman": {
-      "depends": [
-        "c-ares",
-        "ffmpeg",
-        "gtk3",
-        "http-parser",
-        "libappindicator-gtk2",
-        "libappindicator-gtk3",
-        "libappindicator-sharp",
-        "libevent",
-        "libnotify",
-        "libvpx",
-        "libxslt",
-        "libxss",
-        "minizip",
-        "nss",
-        "re2",
-        "snappy"
-      ]
-    },
-    "rpm": {
-      "depends": [
-        "libappindicator",
-        "libnotify"
-      ]
-    },
-    "squirrelWindows": {
-      "iconUrl": "https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/icons/win32/icon.ico",
-      "loadingGif": "./icons/win32/background-setup.gif"
+    "nsis": {
+      "artifactName": "${name}-setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": true,
+      "installerHeader": "./icons/win32/header-setup.bmp",
+      "installerHeaderIcon": "./icons/win32/icon.ico",
+      "installerIcon": "./icons/win32/icon-setup.ico",
+      "installerSidebar": "./icons/win32/background-setup.bmp",
+      "oneClick": false,
+      "runAfterFinish": false
     }
   }
 }

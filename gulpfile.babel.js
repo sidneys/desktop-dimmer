@@ -4,93 +4,117 @@
 /**
  * Modules
  * Node
- * @global
  * @constant
  */
 const path = require('path');
 
 /**
  * Modules
- * External
- * @global
+ * Electron
  * @constant
  */
-const gulp = require('gulp');
 const electron = require('electron');
-const appRootPath = require('app-root-path').path;
+const { app } = electron;
+
+/**
+ * Modules
+ * External
+ * @constant
+ */
+const appRootPath = require('app-root-path');
 const electronConnect = require('electron-connect');
+const gulp = require('gulp');
+const minimist = require('minimist');
+
+
+/**
+ * Modules
+ * Configuration
+ */
+appRootPath.setPath(path.join(__dirname));
 
 /**
  * Modules
  * Internal
- * @global
  * @constant
  */
-const packageJson = require(path.join(appRootPath, 'package.json'));
+const logger = require(path.join(appRootPath.path, 'lib', 'logger'))({ write: true });
+const packageJson = require(path.join(appRootPath.path, 'package.json'));
 
 
 /**
- * Paths
- * @global
+ * Filesystem
+ * @constant
+ * @default
  */
-let appMain = path.join(appRootPath, packageJson.main);
+const applicationPath = path.join(appRootPath['path'], packageJson.main);
 
 /**
- * Electron Connect
- * @global
+ * Electron Connect Server
+ * Init
  */
-let electronConnectServer = electronConnect.server.add({
+const electronConnectServer = electronConnect.server.create({
+    //logLevel: 2,
+    //verbose: true,
+    stopOnClose: true,
     electron: electron,
-    path: appMain,
-    useGlobalElectron: false,
-    verbose: false,
-    stopOnClose: false,
-    logLevel: 2
+    path: applicationPath,
+    useGlobalElectron: false
 });
 
 /**
- * App Sources
- * @global
- * @constant
+ * Electron Connect Server
+ * Files
  */
 let appSources = {
     main: [
-        path.join(appRootPath, 'app', 'scripts', '**', '*.*'),
-        path.join(appRootPath, 'app', 'html', '*.*'),
-        path.join(appRootPath, 'icons', '**', '*.*'),
-        path.join(appRootPath, 'app', 'styles', '*.*'),
-        path.join(appRootPath, 'app', 'fonts', '*.*')
+        path.join(appRootPath['path'], 'app', 'fonts', '**', '*.*'),
+        path.join(appRootPath['path'], 'app', 'html', '**', '*.*'),
+        path.join(appRootPath['path'], 'app', 'images', '**', '*.*'),
+        path.join(appRootPath['path'], 'app', 'scripts', 'main', '**', '*.*'),
+        path.join(appRootPath['path'], 'app', 'styles', '**', '*.*'),
+        path.join(appRootPath['path'], 'package.json')
     ],
-    renderer: []
+    renderer: [
+        path.join(appRootPath['path'], 'app', 'scripts', 'renderer', '**', '*.*')
+    ]
 };
 
-          console.log(appSources)
+
 /**
- * Task
- * Start Livereload Server
+ * Server
+ * start
  */
-gulp.task('livereload', function() {
+gulp.task('livereload', () => {
+    let globalArgvObj;
+    let npmArgvObj;
+    try { globalArgvObj = minimist(process.argv); } catch (err) {}
+    try { npmArgvObj = minimist(JSON.parse(process.env.npm_config_argv).original); } catch (err) {}
+
+    logger.info(globalArgvObj)
+    logger.info(npmArgvObj)
+
     electronConnectServer.start();
-    gulp.watch(appSources.main, ['restart:main']);
-    gulp.watch(appSources.renderer, ['reload:renderer']);
+    gulp.watch(appSources.main, ['main:restart']);
+    gulp.watch(appSources.renderer, ['renderer:reload']);
 });
 
 /**
- * Task
- * Restart Main Process
+ * Main Process
+ * restart
  */
-gulp.task('restart:main', function(done) {
+gulp.task('main:restart', (callback) => {
     electronConnectServer.restart();
-    done();
+    callback();
 });
 
 /**
- * Task
- * Restart Renderer Process
+ * Renderer Process
+ * restart
  */
-gulp.task('reload:renderer', function(done) {
+gulp.task('renderer:reload', (callback) => {
     electronConnectServer.reload();
-    done();
+    callback();
 });
 
 

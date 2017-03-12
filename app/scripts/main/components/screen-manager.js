@@ -30,8 +30,8 @@ const appRootPath = require('app-root-path').path;
  * @global
  * @constant
  */
-const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'components', 'overlay-manager'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const overlayManager = require(path.join(appRootPath, 'app', 'scripts', 'main', 'components', 'overlay-manager'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 
 
 /**

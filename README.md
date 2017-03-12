@@ -1,7 +1,7 @@
 # Desktop Dimmer [![Beta](https://img.shields.io/badge/status-alpha-blue.svg?style=flat)]() [![travis](https://img.shields.io/travis/sidneys/desktop-dimmer.svg?style=flat)](https://travis-ci.org/sidneys/desktop-dimmer) [![appveyor](https://ci.appveyor.com/api/projects/status/oc57pq7hfslqg3ru?svg=true)](https://ci.appveyor.com/project/sidneys/desktop-dimmer) [![npm](https://img.shields.io/npm/v/desktop-dimmer.svg?style=flat)](https://npmjs.com/package/desktop-dimmer) [![dependencies](https://img.shields.io/david/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer) [![devDependencies](https://img.shields.io/david/dev/sidneys/desktop-dimmer.svg?style=flat-square)](https://npmjs.com/package/desktop-dimmer)
 
 <p align="center">
-  <img height="250px" src="https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/graphics/icon.png"/><br><br>
+  <img height="250px" src="https://raw.githubusercontent.com/sidneys/desktop-dimmer/master/resources/graphics/icon.png"/><br><br>
   <b>Enable darker-than-dark dimming for internal and external screens.</b><br>
   Available for macOS, Windows and Linux (Beta).
 </p>
@@ -9,8 +9,8 @@
 
 ------
 
-![macOS](https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/screenshots/screenshot-macos.png)
-![Windows 10](https://raw.githubusercontent.com/sidneys/desktop-dimmer/release/resources/screenshots/screenshot-win32.png)
+![macOS](https://raw.githubusercontent.com/sidneys/desktop-dimmer/master/resources/screenshots/screenshot-macos.png)
+![Windows 10](https://raw.githubusercontent.com/sidneys/desktop-dimmer/master/resources/screenshots/screenshot-win32.png)
 
 ------
 

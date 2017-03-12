@@ -27,7 +27,6 @@ const app = global.menubar.app;
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const electronConnect = require('electron-connect');
 
 /**
  * Modules
@@ -36,9 +35,7 @@ const electronConnect = require('electron-connect');
  * @constant
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
-const isDebug = require(path.join(appRootPath, 'lib', 'is-debug'));
-const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 
 
 /**
@@ -86,7 +83,7 @@ class PreferencesWindow extends BrowserWindow {
     }
 
     init() {
-        logger.debug('preferences-window', 'init()');
+        logger.debug('init');
 
         this.loadURL(windowUrl);
 
@@ -94,7 +91,7 @@ class PreferencesWindow extends BrowserWindow {
          * @listens Electron#BrowserWindow:close
          */
         this.on('close', (ev) => {
-            logger.debug('preferences-window', 'close');
+            logger.debug('close');
 
             if (!this.forceQuit) {
                 ev.preventDefault();
@@ -106,29 +103,21 @@ class PreferencesWindow extends BrowserWindow {
          * @listens Electron#BrowserWindow:closed
          */
         this.on('closed', () => {
-            logger.debug('preferences-window', 'closed');
+            logger.debug('closed');
         });
 
         /**
          * @listens Electron#WebContents:dom-ready
          */
         this.webContents.on('dom-ready', () => {
-            logger.debug('preferences-window.webContents', '#dom-ready');
-
-            // DEBUG
-            if (isDebug) {
-                this.webContents.openDevTools({ mode: 'detach' });
-            }
-            if (isLivereload) {
-                electronConnect.client.add();
-            }
+            logger.debug('webContents#dom-ready');
         });
 
         /**
          * @listens app#before-quit
          */
         app.on('before-quit', () => {
-            logger.debug('preferences-window', 'app#before-quit');
+            logger.debug('app#before-quit');
 
             this.forceQuit = true;
         });
@@ -140,7 +129,7 @@ class PreferencesWindow extends BrowserWindow {
  * @listens menubar#ready
  */
 app.on('ready', () => {
-    logger.debug('preferences-window', 'app#ready');
+    logger.debug('app#ready');
 
     preferencesWindow = new PreferencesWindow();
 

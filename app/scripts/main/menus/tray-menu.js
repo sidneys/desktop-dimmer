@@ -32,7 +32,7 @@ const appRootPath = require('app-root-path').path;
  * @global
  * @constant
  */
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 const packageJson = require(path.join(appRootPath, 'package.json'));
 
 
@@ -88,7 +88,7 @@ let getTrayMenuTemplate = () => {
  *  Add Menu to Tray
  */
 let registerMenu = (appTray) => {
-    logger.debug('tray-menu', 'registerMenu()');
+    logger.debug('registerMenu');
 
     tray = appTray;
     trayMenu = Menu.buildFromTemplate(getTrayMenuTemplate());

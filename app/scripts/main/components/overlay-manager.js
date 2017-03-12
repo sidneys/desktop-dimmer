@@ -26,10 +26,6 @@ const _ = require('lodash');
 const appRootPath = require('app-root-path').path;
 const electronSettings = require('electron-settings');
 
-/**
- * Settings Configuration
- */
-electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -39,8 +35,8 @@ electronSettings.configure({ prettify: true });
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
 const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
-const OverlayWindow = require(path.join(appRootPath, 'app', 'scripts', 'windows', 'overlay-window'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
+const OverlayWindow = require(path.join(appRootPath, 'app', 'scripts', 'main', 'windows', 'overlay-window'));
 
 
 /**
@@ -62,9 +58,9 @@ global.overlays = {};
  * Save Overlay Settings for each Display
  */
 let persistConfiguration = () => {
-    logger.debug('overlay-manager', 'persistConfiguration()');
+    logger.debug('persistConfiguration');
 
-    let savedOverlays = electronSettings.getSync('overlays');
+    let savedOverlays = electronSettings.get('overlays');
 
     for (let i in global.overlays) {
         savedOverlays[global.overlays[i].displayId] = {
@@ -73,7 +69,7 @@ let persistConfiguration = () => {
         };
     }
 
-    electronSettings.setSync('overlays', savedOverlays);
+    electronSettings.set('overlays', savedOverlays);
 };
 
 /**
@@ -81,7 +77,7 @@ let persistConfiguration = () => {
  * @param { Boolean } restart - relaunch app after removal
  */
 let removeOverlays = (restart) => {
-    logger.debug('overlay-manager', 'removeOverlays()');
+    logger.debug('removeOverlays');
 
     persistConfiguration();
 
@@ -97,7 +93,7 @@ let removeOverlays = (restart) => {
 
         // After window close
         global.overlays[i].on('closed', () => {
-            logger.debug('overlay-manager', 'overlay:closed');
+            logger.debug('overlay:closed');
 
             // Remove reference
             global.overlays[i] = null;
@@ -122,7 +118,7 @@ let removeOverlays = (restart) => {
  * Remove and recreate all Overlays
  */
 let resetOverlays = () => {
-    logger.debug('overlay-manager', 'resetOverlays()');
+    logger.debug('resetOverlays');
 
     removeOverlays(true);
 };
@@ -131,7 +127,7 @@ let resetOverlays = () => {
  * Creates Overlay windows for all screens
  */
 let createOverlays = () => {
-    logger.debug('overlay-manager', 'createOverlays()');
+    logger.debug('createOverlays');
 
     electron.screen.getAllDisplays().forEach(function(display) {
         global.overlays[display.id] = new OverlayWindow(display);
@@ -143,7 +139,7 @@ let createOverlays = () => {
  * @listens appMenubar#before-quit
  */
 global.menubar.app.on('before-quit', () => {
-    logger.debug('overlay-manager', 'menubar.app:before-quit');
+    logger.debug('menubar.app:before-quit');
 
     persistConfiguration();
 });
@@ -152,7 +148,7 @@ global.menubar.app.on('before-quit', () => {
  * @listens Electron#app:ready
  */
 global.menubar.app.on('ready', () => {
-    logger.debug('overlay-manager', 'menubar.app:ready');
+    logger.debug('menubar.app:ready');
 
     createOverlays();
 });

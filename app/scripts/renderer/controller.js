@@ -25,14 +25,8 @@ const { ipcRenderer, remote } = electron;
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const electronConnect = require('electron-connect');
 const electronSettings = require('electron-settings');
 const tinycolor = require('tinycolor2');
-
-/**
- * Settings Configuration
- */
-electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -40,9 +34,8 @@ electronSettings.configure({ prettify: true });
  * @global
  * @constant
  */
-const domHelper = require(path.join(appRootPath, 'app', 'scripts', 'utils', 'dom-helper'));
-const isLivereload = require(path.join(appRootPath, 'lib', 'is-livereload'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const domHelper = require(path.join(appRootPath, 'lib', 'dom-helper'));
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 
 
 /**
@@ -84,7 +77,7 @@ let dom = {
  * Get percentage strings from floating point
  */
 let formatOutput = (value) => {
-    logger.debug('controller', 'formatOutput()');
+    logger.debug('formatOutput');
 
     return parseInt(100 * value) + ' %';
 };
@@ -93,7 +86,7 @@ let formatOutput = (value) => {
  * Pass Slider changes to overlay
  */
 let handleAttributeChange = (displayId, attribute, value) => {
-    logger.debug('controller', 'handleAttributeChange()');
+    logger.debug('handleAttributeChange');
 
     let elControlList = document.querySelectorAll('.display-control-list__display-control');
     elControlList.forEach(function(elControl) {
@@ -121,7 +114,7 @@ let handleAttributeChange = (displayId, attribute, value) => {
  * Pass content size changes to native wrapper window
  */
 let handleSizeChanges = () => {
-    logger.debug('controller', 'handleSizeChanges()');
+    logger.debug('handleSizeChanges');
 
     let currentWidth = menubar.window.getSize()[0];
     let currentHeight = menubar.window.getSize()[1];
@@ -136,7 +129,7 @@ let handleSizeChanges = () => {
  * Slider Movement
  */
 let addDisplaySliders = () => {
-    logger.debug('controller', 'addDisplaySliders()');
+    logger.debug('addDisplaySliders');
 
     let displayList = electron.screen.getAllDisplays();
     let overlayList = [];
@@ -189,7 +182,7 @@ let addDisplaySliders = () => {
  * @listens Electron:ipcRenderer#controller-show
  */
 ipcRenderer.on('controller-show', () => {
-    logger.log('controller', 'ipcRenderer#controller-show');
+    logger.log('ipcRenderer#controller-show');
 
     addDisplaySliders();
 });
@@ -200,7 +193,7 @@ ipcRenderer.on('controller-show', () => {
  * @listens dom.windowControls.exit#MouseEvent:click
  */
 dom.windowControls.exit.addEventListener('click', function() {
-    logger.debug('controller', 'dom.windowControls.exit#click');
+    logger.debug('dom.windowControls.exit#click');
 
     remote.app.quit();
 }, false);
@@ -210,7 +203,7 @@ dom.windowControls.exit.addEventListener('click', function() {
  * @listens dom.windowControls.settings#MouseEvent:click
  */
 dom.windowControls.settings.addEventListener('click', function() {
-    logger.debug('controller', 'dom.windowControls.settings#click');
+    logger.debug('dom.windowControls.settings#click');
 
     windows.preferences.show();
 }, false);
@@ -220,14 +213,15 @@ dom.windowControls.settings.addEventListener('click', function() {
  * @listens dom.windowControls.enable#MouseEvent:click
  */
 dom.windowControls.enable.addEventListener('click', function() {
-    logger.debug('controller', 'dom.windowControls.enable#click');
+    logger.debug('dom.windowControls.enable#click');
 
     dom.windowControls.enable.classList.add('hide');
     dom.windowControls.disable.classList.remove('hide');
 
-    electronSettings.set('isEnabled', true).then(() => {
-        for (let i in overlays) { overlays[i].enable(); }
-    });
+    electronSettings.set('isEnabled', true);
+    for (let i in overlays) {
+        overlays[i].enable();
+    }
 }, false);
 
 /**
@@ -235,14 +229,15 @@ dom.windowControls.enable.addEventListener('click', function() {
  * @listens dom.windowControls.disable#MouseEvent:click
  */
 dom.windowControls.disable.addEventListener('click', function() {
-    logger.debug('controller', 'dom.windowControls.disable#click');
+    logger.debug('dom.windowControls.disable#click');
 
     dom.windowControls.enable.classList.remove('hide');
     dom.windowControls.disable.classList.add('hide');
 
-    electronSettings.set('isEnabled', false).then(() => {
-        for (let i in overlays) { overlays[i].disable(); }
-    });
+    electronSettings.set('isEnabled', true);
+    for (let i in overlays) {
+        overlays[i].disable();
+    }
 }, false);
 
 
@@ -252,7 +247,7 @@ dom.windowControls.disable.addEventListener('click', function() {
  * @listens document#DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-    logger.debug('controller', 'document#DOMContentLoaded');
+    logger.debug('document#DOMContentLoaded');
 
     // Add platform name to <html>
     domHelper.addPlatformClass();
@@ -260,14 +255,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add slider controls
     addDisplaySliders();
 
-    if (electronSettings.getSync('isEnabled') === true) {
+    if (electronSettings.get('isEnabled') === true) {
         dom.windowControls.enable.classList.add('hide');
     } else {
         dom.windowControls.disable.classList.add('hide');
-    }
-
-    // DEBUG
-    if (isLivereload) {
-        electronConnect.client.add();
     }
 }, false);

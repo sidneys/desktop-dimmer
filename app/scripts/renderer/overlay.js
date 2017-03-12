@@ -33,7 +33,7 @@ const tinycolor = require('tinycolor2');
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 
 
 /**
@@ -48,7 +48,7 @@ let dom = {
  * @listens Electron:ipcRenderer#overlay-update
  */
 ipcRenderer.on('overlay-update', (ev, displayId, action, value) => {
-    logger.debug('overlay-manager', 'ipcRenderer#overlay-update');
+    logger.debug('ipcRenderer#overlay-update');
 
     let currentColor = tinycolor(dom.container.style.backgroundColor);
 
@@ -71,5 +71,5 @@ ipcRenderer.on('overlay-update', (ev, displayId, action, value) => {
  * @listens document#DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-    logger.debug('overlay-manager', 'document#DOMContentLoaded');
+    logger.debug('document#DOMContentLoaded');
 }, false);

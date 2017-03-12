@@ -17,14 +17,9 @@ const path = require('path');
  * @constant
  */
 const appRootPath = require('app-root-path').path;
-const autoLaunch = require('auto-launch');
+const AutoLaunch = require('auto-launch');
 const electronSettings = require('electron-settings');
 const _ = require('lodash');
-
-/**
- * Settings Configuration
- */
-electronSettings.configure({ prettify: true });
 
 /**
  * Modules
@@ -33,8 +28,7 @@ electronSettings.configure({ prettify: true });
  * @constant
  */
 const packageJson = require(path.join(appRootPath, 'package.json'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ writeToFile: true });
-
+const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
 
 /**
  * App
@@ -45,17 +39,11 @@ const appName = packageJson.name;
 const appProductName = packageJson.productName || packageJson.name;
 const appVersion = packageJson.version;
 
-
 /**
- * @global
+ * Modules
+ * Configuration
  */
-let autoLauncher = new autoLaunch({
-    name: appName,
-    isHidden: true,
-    mac: {
-        useLaunchAgent: true
-    }
-});
+let autoLauncher = new AutoLaunch({ name: appName, mac: { useLaunchAgent: true } });
 
 /**
  * DOM Elements
@@ -86,16 +74,16 @@ let setName = (name) => {
  * Apply setting changes
  */
 let applySetting = (keypath, value) => {
-    logger.debug('preferences', 'applySetting()', 'keypath', keypath, 'value', value);
+    logger.debug('applySetting', 'keypath:', keypath, 'value:', value);
 
     let keyname = (keypath.split('.').reverse())[0];
     switch (keyname) {
         case 'launchOnStartup':
-            if (value === true) {
-                autoLauncher.enable();
-            } else {
-                autoLauncher.disable();
+            if (!!value) {
+                return autoLauncher.enable();
             }
+
+            autoLauncher.disable();
     }
 };
 
@@ -103,18 +91,18 @@ let applySetting = (keypath, value) => {
  * Handle Input to Setting change
  */
 let handleSettingChange = (keypath, value) => {
-    logger.debug('preferences', 'handleSettingChange()', 'keypath', keypath, 'value', value);
+    logger.debug('handleSettingChange', 'keypath', keypath, 'value', value);
 
-    electronSettings.setSync(keypath, value);
+    electronSettings.set(keypath, value);
 };
 
 /**
  * Reads electron-settings and generates HTML form
  */
 let registerUserSettings = () => {
-    logger.debug('preferences', 'registerUserSettings ()');
+    logger.debug('registerUserSettings ');
 
-    let settings = electronSettings.getSync();
+    let settings = electronSettings.getAll();
     let keyList = [ 'launchOnStartup' ];
 
     keyList.forEach(function(keyname) {
@@ -135,8 +123,8 @@ let registerUserSettings = () => {
         dom.settingsList.appendChild(elLabel);
 
         applySetting(keypath, settings[keyname]);
-        electronSettings.observe(keypath, function(ev) {
-            applySetting(keypath, ev.newValue);
+        electronSettings.watch(keypath, (newValue) => {
+            applySetting(keypath, newValue);
         });
     });
 };
@@ -146,7 +134,7 @@ let registerUserSettings = () => {
  * @listens window#load
  */
 window.addEventListener('load', function() {
-    logger.debug('preferences', 'window#load');
+    logger.debug('window#load');
 
     setName(appProductName);
     setVersion(appVersion);
@@ -157,6 +145,6 @@ window.addEventListener('load', function() {
  * @listens document#DOMContentLoaded
  */
 document.addEventListener('DOMContentLoaded', function() {
-    logger.debug('preferences', 'document#DOMContentLoaded');
+    logger.debug('document#DOMContentLoaded');
     registerUserSettings();
 }, false);
