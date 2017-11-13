@@ -1,17 +1,30 @@
 {
-  "3.1.2": {
+  "4.0.3": {
     "🍾 features": [
-      "Adds new build & release system"
+      "Per-display enabling and disabling of Desktop Dimmer",
+      "Improved user interface performance",
+      "Extended range for dimming factor",
+      "Updated application icon"
+    ],
+    "💎 improved": [
+      "Augmentations to configuration storage strategy",
+      "Various stability and performance improvements"
+    ],
+    "🚨 fixed": [
+      "Upgraded to work with Apple macOS High Sierra (macOS)",
+      "Upgraded to work with latest Gnome-based desktop environments (Linux) (#22)",
+      "Upgraded to work with latest Ubuntu-based distributions (Linux) (#22)"
     ],
     "📒 documentation": [
-      "Updated screenshots",
-      "Add developer templates"
+      "Expanded `README.md`",
+      "Extended JSDoc coverage"
     ],
     "👷 internals": [
-      "Automates change log generation",
-      "Upgrades Electron to v1.7.4",
-      "Upgrades build system",
-      "Upgrades dependencies"
+      "Rollback `Electron` to `v1.4.16` upstream issue (https://github.com/electron/electron/issues/2170)",
+      "Extensive refactoring",
+      "Upgrades `node_modules`",
+      "Upgrades `services`",
+      "Upgrades `lib`"
     ]
   }
 }

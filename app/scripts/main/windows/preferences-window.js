@@ -3,7 +3,6 @@
 /**
  * Modules
  * Node
- * @global
  * @constant
  */
 const path = require('path');
@@ -12,56 +11,54 @@ const url = require('url');
 /**
  * Modules
  * Electron
- * @global
  * @constant
  */
 const electron = require('electron');
-const { BrowserWindow } = electron;
-const app = global.menubar.app;
+const { BrowserWindow } = electron || electron.remote;
+
+/**
+ * Modules
+ * Configuration
+ */
+const app = global.menubar.menubar.app;
 
 
 /**
  * Modules
  * External
- * @global
  * @constant
  */
 const appRootPath = require('app-root-path').path;
+const logger = require('@sidneys/logger')({ write: true });
+
 
 /**
- * Modules
- * Internal
- * @global
+ * Filesystem
  * @constant
+ * @default
  */
-const packageJson = require(path.join(appRootPath, 'package.json'));
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
-
+const windowHtml = path.join(appRootPath, 'app', 'html', 'preferences.html');
 
 /**
- * @global
+ * Application
  * @constant
+ * @default
  */
-const appProductName = packageJson.productName || packageJson.name;
-const windowUrl = url.format({
-    protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'preferences.html')
-});
-
-/**
- * @global
- */
-let preferencesWindow = {};
+const windowTitle = global.manifest.productName;
+const windowUrl = url.format({ protocol: 'file:', pathname: windowHtml });
 
 
 /**
- * Settings Window
- * @class
+ * @class PreferencesWindow
+ * @extends Electron.BrowserWindow
+ * @namespace Electron
  */
 class PreferencesWindow extends BrowserWindow {
     constructor() {
         super({
             acceptFirstMouse: true,
             alwaysOnTop: false,
+            autoHideMenuBar: true,
             fullscreenable: false,
             maximizable: false,
             minimizable: false,
@@ -70,75 +67,64 @@ class PreferencesWindow extends BrowserWindow {
             maxHeight: 256,
             resizable: false,
             show: false,
-            title: `${appProductName} Preferences`,
+            title: `${windowTitle} Preferences`,
             type: 'textured',
             width: 320,
             minWidth: 320,
-            maxWidth: 640,
+            maxWidth: 640
         });
-
-        this.forceQuit = false;
 
         this.init();
     }
 
+    /**
+     * Init
+     */
     init() {
         logger.debug('init');
 
-        this.loadURL(windowUrl);
-
         /**
-         * @listens Electron#BrowserWindow:close
+         * @listens PreferencesWindow#close
          */
-        this.on('close', (ev) => {
-            logger.debug('close');
+        this.on('close', (event) => {
+            logger.debug('AppWindow#close');
 
-            if (!this.forceQuit) {
-                ev.preventDefault();
+            if (global.state.isQuitting === false) {
+                event.preventDefault();
                 this.hide();
             }
         });
 
-        /**
-         * @listens Electron#BrowserWindow:closed
-         */
-        this.on('closed', () => {
-            logger.debug('closed');
-        });
 
-        /**
-         * @listens Electron#WebContents:dom-ready
-         */
-        this.webContents.on('dom-ready', () => {
-            logger.debug('webContents#dom-ready');
-        });
-
-        /**
-         * @listens app#before-quit
-         */
-        app.on('before-quit', () => {
-            logger.debug('app#before-quit');
-
-            this.forceQuit = true;
-        });
+        this.loadURL(windowUrl);
     }
 }
 
 
 /**
- * @listens menubar#ready
+ * Init
  */
-app.on('ready', () => {
+let init = () => {
+    logger.debug('init');
+
+    // Ensure single instance
+    if (!global.preferencesWindow) {
+        global.preferencesWindow = new PreferencesWindow();
+    }
+};
+
+
+/**
+ * @listens Electron.App#on
+ */
+app.once('ready', () => {
     logger.debug('app#ready');
 
-    preferencesWindow = new PreferencesWindow();
-
-    if (!global.windows) { global.windows = {}; }
-    global.windows.preferences = preferencesWindow;
+    init();
 });
 
 
 /**
  * @exports
  */
-module.exports = preferencesWindow;
+module.exports = global.preferencesWindow;

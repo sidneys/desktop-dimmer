@@ -1,7 +1,7 @@
 {
   "name": "desktop-dimmer",
   "productName": "Desktop Dimmer",
-  "version": "3.1.2",
+  "version": "4.0.3",
   "description": "Enables darker-than-dark Desktop dimming for your displays",
   "license": "MIT",
   "homepage": "https://sidneys.github.io/desktop-dimmer",
@@ -18,7 +18,7 @@
     "url": "https://github.com/sidneys/desktop-dimmer/issues"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=9.0.0"
   },
   "os": [
     "darwin",
@@ -34,78 +34,103 @@
   ],
   "preferGlobal": true,
   "dependencies": {
+    "@sidneys/dom-tools": "^1.0.5",
+    "@sidneys/electron-build": "^1.1.5",
+    "@sidneys/electron-deploy-github": "^1.0.5",
+    "@sidneys/electron-localsetup": "^1.0.6",
+    "@sidneys/is-env": "^1.0.4",
+    "@sidneys/logger": "^1.0.9",
+    "@sidneys/platform-tools": "^1.0.1",
+    "@sidneys/releasenotes": "^1.0.10",
     "app-root-path": "^2.0.1",
     "appdirectory": "^0.1.0",
     "auto-launch": "git://github.com/sidneys/node-auto-launch.git#master",
-    "babel-cli": "^6.24.1",
+    "babel-cli": "^6.26.0",
     "babel-preset-electron": "^1.4.15",
-    "chalk": "^2.0.1",
+    "chalk": "^2.3.0",
     "chalkline": "0.0.5",
-    "color-picker": "git://github.com/tovic/color-picker.git#master",
     "electron-editor-context-menu": "^1.1.1",
-    "electron-settings": "^3.1.1",
-    "electron-updater": "^2.4.4",
-    "file-type": "^5.2.0",
+    "electron-settings": "^3.1.4",
+    "electron-updater": "^2.16.1",
+    "file-type": "^7.2.0",
     "file-url": "^2.0.2",
-    "fs-extra": "^3.0.1",
-    "keypath": "^0.0.1",
+    "filesize": "^3.5.11",
+    "fs-extra": "^4.0.2",
+    "globby": "^6.1.0",
+    "hammerjs": "^2.0.8",
+    "is-reachable": "^2.3.3",
+    "keypath": "0.0.1",
     "lodash": "^4.17.4",
     "menubar": "git://github.com/sidneys/menubar.git#add-taskbar-support",
     "minimist": "^1.2.0",
-    "moment": "^2.18.1",
+    "moment": "^2.19.2",
+    "moment-duration-format": "^1.3.0",
+    "parse-domain": "^1.1.0",
     "parse-semver": "^1.1.1",
     "present": "^1.0.0",
-    "read-chunk": "^2.0.0",
+    "query-string": "^5.0.1",
+    "random-int": "^1.0.0",
+    "read-chunk": "^2.1.0",
+    "remove-markdown": "^0.2.2",
+    "request": "^2.83.0",
     "semver-compare": "^1.0.0",
     "simple-reload": "0.0.4",
-    "tinycolor2": "latest",
-    "try-require": "^1.2.1"
+    "tinycolor2": "^1.4.1",
+    "try-require": "latest"
   },
   "devDependencies": {
-    "electron": "^1.7.4",
-    "electron-builder": "^19.13.0",
-    "electron-connect": "^0.6.1",
-    "electron-prebuilt-compile": "^1.7.3",
-    "fkill": "^5.0.0",
-    "git-branch": "^1.0.0",
-    "glob": "^7.1.2",
+    "docdash": "^0.4.0",
+    "electron": "1.4.15",
+    "electron-builder": "19.45.4",
+    "electron-connect": "^0.6.2",
+    "electron-prebuilt-compile": "1.4.15",
+    "eslint": "^4.11.0",
     "gulp": "^3.9.1",
     "gulp-load-plugins": "^1.5.0",
-    "hash-files": "^1.1.1",
-    "is-ci": "^1.0.10",
-    "json2md": "^1.5.8",
-    "progress": "^2.0.0",
-    "publish-release": "^1.3.3",
-    "yamljs": "^0.3.0"
+    "jsdoc": "^3.5.5",
+    "minami": "^1.2.3"
   },
   "main": "./app/scripts/main/components/application.js",
   "bin": {
     "desktop-dimmer": "./bin/cli.js"
   },
   "scripts": {
-    "build": "node ./lib/build.js",
-    "deploy": "node ./lib/deploy.js",
+    "build": "node ./node_modules/@sidneys/electron-build/index.js",
+    "deploy": "node ./node_modules/@sidneys/electron-deploy-github/index.js",
+    "docs": "./node_modules/.bin/jsdoc --verbose --configure .jsdoc.json",
     "livereload": "./node_modules/.bin/gulp",
-    "localsetup": "./node_modules/.bin/babel-node ./lib/localsetup.js",
-    "releasenotes": "node ./lib/releasenotes.js",
-    "dev": "./node_modules/.bin/electron ./app/scripts/main/components/application.js"
+    "localsetup": "node ./node_modules/@sidneys/electron-localsetup/index.js",
+    "releasenotes": "node ./node_modules/@sidneys/releasenotes/index.js",
+    "start": "./node_modules/.bin/electron ./app/scripts/main/components/application.js"
   },
   "build": {
     "appId": "de.sidneys.desktop-dimmer",
+    "asar": true,
+    "compression": "maximum",
     "directories": {
       "buildResources": "./build/staging",
       "output": "./build/output"
     },
     "files": [
-      "!build",
-      "!gh-pages",
-      "!resources",
-      "!website"
+      "!.appveyor.yml",
+      "!.babelrc",
+      "!.editorconfig",
+      "!.eslintignore",
+      "!.eslintrc",
+      "!.github/**",
+      "!.gitignore",
+      "!.npmignore",
+      "!.travis.yml",
+      "!build/**",
+      "!gh-pages/**",
+      "!resources/**",
+      "!website/**"
     ],
     "mac": {
       "category": "public.app-category.utilities",
       "icon": "./icons/darwin/icon.icns",
       "target": [
+        "dir",
         "dmg",
         "zip"
       ]
@@ -131,7 +156,7 @@
       "icon": "./icons/darwin/icon-setup.icns"
     },
     "nsis": {
-      "artifactName": "${name}-setup-${version}.${ext}",
+      "artifactName": "${name}-${version}-setup.${ext}",
       "deleteAppDataOnUninstall": true,
       "installerHeader": "./icons/win32/header-setup.bmp",
       "installerHeaderIcon": "./icons/win32/icon.ico",

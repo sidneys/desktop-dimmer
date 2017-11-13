@@ -1,8 +1,5 @@
 matrix:
   include:
-    - os: osx
-      osx_image: xcode8.2
-      sudo: required
     - os: linux
       sudo: required
       dist: trusty
@@ -18,6 +15,7 @@ branches:
 cache:
   directories:
     - "./node_modules"
+    - "${HOME}/.yarn-cache"
 
 addons:
   apt:
@@ -32,30 +30,28 @@ addons:
 
 before_install:
   - echo "🚦 Authorizing Build"
-  - if [[ "${OSTYPE}" == "darwin"* ]] && [[ "${DEPLOY_MACOS}" == 0 ]]; then travis_terminate 0; fi
-  - if [[ "${OSTYPE}" == "linux"* ]] && [[ "${DEPLOY_LINUX}" == 0 ]]; then travis_terminate 0; fi
-  - echo "🔧 Setting up Environment"
+  - echo "🔧 Setting up Node"
   - curl -o- https://raw.githubusercontent.com/creationix/nvm/master/install.sh | NVM_DIR="${HOME}"/.nvm sh
-  - source "${HOME}"/.nvm/nvm.sh && nvm install 8.0.0 && nvm use 8.0.0
+  - source "${HOME}"/.nvm/nvm.sh && nvm install 9.1.0 && nvm use 9.1.0
   - npm --global update npm
+  - npm --global install yarn
 
 install:
   - echo "📥 Installing Dependencies"
-  - npm install
+  - yarn install
 
 script:
   - echo "📦 Building"
   - npm run build --metadata
 
 after_success:
-  - echo "📮 Deploying"
+  - echo "📮 Deploying to Github"
   - npm run deploy
 
 notifications:
   webhooks:
-    urls:
-      - https://webhooks.gitter.im/e/24d905038aa07dda37df
-    on_success: change
     on_failure: always
     on_start: never
-
+    on_success: change
+    urls:
+      - https://webhooks.gitter.im/e/a1a9de50af1c703bfe6c

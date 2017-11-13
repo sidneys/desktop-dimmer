@@ -5,24 +5,37 @@
 /* html
    ========================================================================== */
 
-html, body {
+html,
+body
+{
     padding: 0;
     margin: 0;
     overflow: hidden;
 }
 
-html * {
+html *
+{
     -webkit-font-smoothing: subpixel-antialiased;
 }
+
+textarea,
+input,
+button
+{
+    outline: none;
+}
+
 
 /* draggable
    ========================================================================== */
 
-.linux .window-controls {
+.linux .window-controls
+{
     -webkit-app-region: drag;
 }
 
-.linux .window-controls .button {
+.linux .window-controls .button
+{
     -webkit-app-region: no-drag;
 }
 
@@ -33,8 +46,10 @@ html * {
 /* html
    ========================================================================== */
 
-html.overlay {
+html.overlay
+{
     background-color: transparent;
+    transition: all 250ms ease-in-out;
 }
 
 /* ==========================================================================
@@ -44,16 +59,17 @@ html.overlay {
 /* html
    ========================================================================== */
 
-html.controller {
+html.controller
+{
     font-size: 62.5%;
     font-family: 'Roboto', sans-serif;
     font-weight: 300;
-    background-color: transparent;
 }
 
 /* .window-controls
    ========================================================================== */
-.window-controls {
+.window-controls
+{
     display: block;
     text-align: right;
     position: relative;
@@ -61,11 +77,13 @@ html.controller {
     transition: all 100ms 50ms ease-out;
 }
 
-.window-controls:hover {
+.window-controls:hover
+{
     transform: translate(-2.4rem, -0.1rem) scale(1.2);
 }
 
-.window-controls .button {
+.window-controls .button
+{
     color: rgba(255, 255, 255, 0.9);
     position: relative;
     padding: 0 0.2rem;
@@ -79,12 +97,14 @@ html.controller {
     transition: all 250ms ease-in-out;
 }
 
-.window-controls .button:hover {
+.window-controls .button:hover
+{
     color: rgba(255, 255, 255, 1.0);
     transform: scale(1.5);
 }
 
-.window-controls .hide {
+.window-controls .hide
+{
     display: none;
     opacity: 0;
     visibility: hidden;
@@ -93,7 +113,8 @@ html.controller {
 /* .display-control-list
    ========================================================================== */
 
-.display-control-list {
+.display-control-list
+{
     padding: 0.5rem 1rem 0 1rem;
     opacity: 0;
     transition: all 200ms ease-out;
@@ -102,33 +123,38 @@ html.controller {
 /* .display-control
    ========================================================================== */
 
-.display-control-list__display-control {
+.display-control-list__display-control
+{
     margin: 0;
     height: 3rem;
 }
 
-.display-control-list__display-control:not(:last-child) {
+.display-control-list__display-control:not(:last-child)
+{
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* .display-control__alpha_slider
    ========================================================================== */
 
-input.alpha {
+input.alpha
+{
     position: relative;
     display: block;
     float: right;
     width: 75%;
     height: 3rem;
     margin: 0;
-    padding: 0 5% 0 0;
+    padding: 0;
 }
 
 /* .display-control__alpha-label
    ========================================================================== */
-output.alpha {
+
+output.alpha
+{
     color: rgba(255, 255, 255, 1);
-    padding: 0 0 0 5%;
+    padding: 0 0 0 4%;
     width: 15%;
     margin: 0;
     line-height: 3rem;
@@ -139,20 +165,24 @@ output.alpha {
 
 /* input
    ========================================================================== */
-input[type=range] {
+
+input[type=range]
+{
     -webkit-appearance: none;
     background: transparent;
 }
 
-input[type=range]::-webkit-slider-runnable-track {
+input[type=range]::-webkit-slider-runnable-track
+{
     width: 100%;
     height: 0.25rem;
-    background: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.3);
     border: none;
 }
 
-input[type=range]::-webkit-slider-thumb {
-    background: rgb(255, 255, 255);
+input[type=range]::-webkit-slider-thumb
+{
+    background-color: rgb(255, 255, 255);
     -webkit-appearance: none;
     border: 1px solid rgba(0, 0, 0, 0.3);
     height: 1.2rem;
@@ -162,13 +192,42 @@ input[type=range]::-webkit-slider-thumb {
     margin-top: -0.44rem;
 }
 
-input[type=range]:focus {
+input[type=range]:focus
+{
     outline: none;
 }
 
-/* name
+/* .display-control__visibility
    ========================================================================== */
-.preferences .name, .preferences .version {
+
+input.visibility
+{
+    -webkit-appearance: none;
+    background: transparent;
+    border: rgba(255, 255, 255, 0.3) 0.1rem solid;
+    padding: 0;
+    width: 5%;
+    margin: 0.9rem 0 0 0.2rem;
+    height: 1.2rem;
+    text-align: left;
+    float: left;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+input.visibility:checked:after
+{
+    content: '\2715';
+    position: relative;
+    left: 0.12rem;
+    top: -0.1rem;
+}
+
+/* .preferences
+   ========================================================================== */
+
+.preferences .version
+{
     text-align: right;
     font-size: 0.7rem;
     line-height: 0.7rem;

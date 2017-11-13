@@ -3,35 +3,30 @@
 
 /**
  * Modules
- * Node
- * @constant
- */
-const path = require('path');
-
-/**
- * Modules
  * Electron
  * @constant
  */
 const electron = require('electron');
-const { app, webContents } = electron;
+const { webContents } = electron || electron.remote;
+
+/**
+ * Modules
+ * Configuration
+ */
+const app = global.menubar.menubar.app;
 
 /**
  * Modules
  * External
  * @constant
  */
-const appRootPath = require('app-root-path')['path'];
+const isDebug = require('@sidneys/is-env')('debug');
+const isLivereload = require('@sidneys/is-env')('livereload');
+const logger = require('@sidneys/logger')({ write: true });
+/* eslint-disable no-unused-vars */
+const filesize = require('filesize');
 const tryRequire = require('try-require');
-
-/**
- * Modules
- * Internal
- * @constant
- */
-const isDebug = require(path.join(appRootPath, 'lib', 'is-env'))('debug');
-const isLivereload = require(path.join(appRootPath, 'lib', 'is-env'))('livereload');
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
+/* eslint-enable */
 
 
 /**
@@ -39,7 +34,6 @@ const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true })
  * @default
  */
 const defaultTimeout = 5000;
-
 
 /**
  * Init
@@ -49,23 +43,22 @@ let init = () => {
 
     let timeout = setTimeout(() => {
         webContents.getAllWebContents().forEach((contents) => {
-
             /**
-             * Developer Tools
+             * Open Developer Tools
              */
             if (isDebug) {
-                logger.info('opening developer tools:', `"${contents.getTitle()}"`);
+                logger.info('opening developer tools:', `"${contents.getURL()}"`);
 
-                contents.openDevTools({ mode: 'undocked' });
+                contents.openDevTools();
             }
 
             /**
-             * Live Reload
+             * Start Live Reload
              */
             if (isLivereload) {
-                logger.info('starting live reload:', `"${contents.getTitle()}"`);
+                logger.info('starting live reload:', `"${contents.getURL()}"`);
 
-                tryRequire('electron-connect').client.create();
+                tryRequire('electron-connect')['client'].create();
             }
         });
         clearTimeout(timeout);
@@ -74,7 +67,7 @@ let init = () => {
 
 
 /**
- * @listens Electron.App#ready
+ * @listens Electron.App#Event:ready
  */
 app.once('ready', () => {
     logger.debug('app#ready');

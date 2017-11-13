@@ -3,16 +3,7 @@
 
 /**
  * Modules
- * Node
- * @global
- * @constant
- */
-const path = require('path');
-
-/**
- * Modules
  * Electron
- * @global
  * @constant
  */
 const electron = require('electron');
@@ -21,7 +12,6 @@ const { ipcRenderer } = electron;
 /**
  * Modules
  * External
- * @global
  * @constant
  */
 const tinycolor = require('tinycolor2');
@@ -29,11 +19,9 @@ const tinycolor = require('tinycolor2');
 /**
  * Modules
  * Internal
- * @global
  * @constant
  */
-const appRootPath = require('app-root-path').path;
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
+const logger = require('@sidneys/logger')({ write: true });
 
 
 /**
@@ -43,33 +31,40 @@ let dom = {
     container: document.querySelector('html')
 };
 
+/**
+ * Get color
+ * @return {tinycolor} Color
+ */
+let getColor = () => tinycolor(dom.container.style.backgroundColor);
 
 /**
- * @listens Electron:ipcRenderer#overlay-update
+ * Get alpha
+ * @return {OverlayAlpha} Alpha
  */
-ipcRenderer.on('overlay-update', (ev, displayId, action, value) => {
-    logger.debug('ipcRenderer#overlay-update');
+let getAlpha = () => (getColor()).getAlpha();
 
-    let currentColor = tinycolor(dom.container.style.backgroundColor);
 
-    switch (action) {
-        case 'alpha':
-            dom.container.style.backgroundColor = currentColor.setAlpha(parseFloat(value)).toRgbString();
-            break;
-        case 'color':
-            let color = tinycolor(value);
-            color.setAlpha((currentColor.getAlpha()));
-            dom.container.style.backgroundColor = color.toRgbString();
-            break;
+/**
+ * @listens Electron:ipcRenderer#overlay-change
+ */
+ipcRenderer.on('update-overlay', (event, overlayConfiguration) => {
+    logger.debug('ipcRenderer#overlay-change');
+
+    /**
+     * Alpha
+     */
+    if (overlayConfiguration.alpha) {
+        const targetColor = getColor();
+        targetColor.setAlpha(parseFloat(overlayConfiguration.alpha));
+        dom.container.style.backgroundColor = targetColor.toRgbString();
+    }
+
+    /**
+     * Color
+     */
+    if (overlayConfiguration.color) {
+        const targetColor = tinycolor(overlayConfiguration.color);
+        targetColor.setAlpha(getAlpha());
+        dom.container.style.backgroundColor = targetColor.toRgbString();
     }
 });
-
-
-//noinspection JSValidateJSDoc
-/**
- * Watch for size changes
- * @listens document#DOMContentLoaded
- */
-document.addEventListener('DOMContentLoaded', function() {
-    logger.debug('document#DOMContentLoaded');
-}, false);

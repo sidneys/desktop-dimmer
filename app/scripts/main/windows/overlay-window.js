@@ -4,7 +4,6 @@
 /**
  * Modules
  * Node
- * @global
  * @constant
  */
 const path = require('path');
@@ -13,193 +12,236 @@ const url = require('url');
 /**
  * Modules
  * Electron
- * @global
  * @constant
  */
 const electron = require('electron');
-const { BrowserWindow } = electron;
+const { BrowserWindow } = electron || electron.remote;
 
 /**
  * Modules
  * External
- * @global
  * @constant
  */
-const appRootPath = require('app-root-path').path;
-const electronSettings = require('electron-settings');
 const _ = require('lodash');
+const appRootPath = require('app-root-path').path;
+const isDebug = require('@sidneys/is-env')('debug');
+const logger = require('@sidneys/logger')({ write: true });
+const platformTools = require('@sidneys/platform-tools');
+
 
 /**
  * Modules
  * Internal
- * @global
  * @constant
  */
-const isDebug = require(path.join(appRootPath, 'lib', 'is-env'))('debug');
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
-const platformHelper = require(path.join(appRootPath, 'lib', 'platform-helper'));
+const OverlayConfiguration = require(path.join(appRootPath, 'app', 'scripts', 'main', 'windows', 'overlay-configuration'));
 
 
 /**
- * Paths
- * @global
+ * Tray icons
  * @constant
  */
-const appTrayIconDefault = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-default${platformHelper.templateImageExtension(platformHelper.name)}`);
-const appTrayIconTranslucent = path.join(appRootPath, 'icons', platformHelper.type, `icon-tray-translucent${platformHelper.templateImageExtension(platformHelper.name)}`);
-const windowUrl = url.format({ protocol: 'file:', pathname: path.join(appRootPath, 'app', 'html', 'overlay.html') });
+const trayIconDefault = path.join(appRootPath, 'app', 'images', `${platformTools.type}-tray-icon-default${platformTools.templateImageExtension(platformTools.type)}`);
+const trayIconTranslucent = path.join(appRootPath, 'app', 'images', `${platformTools.type}-tray-icon-translucent${platformTools.templateImageExtension(platformTools.type)}`);
+
+/**
+ * Filesystem
+ * @constant
+ * @default
+ */
+const windowHtml = path.join(appRootPath, 'app', 'html', 'overlay.html');
+
+/**
+ * Application
+ * @constant
+ * @default
+ */
+const windowUrl = url.format({ protocol: 'file:', pathname: windowHtml });
 
 
 /**
- * Overlay Window
- * @constructor
+ * Get overlayManager
+ * @return {OverlayManager}
+ */
+let getOverlayManager = () => global.overlayManager;
+
+/**
+ * Get TrayMenu
+ * @return {TrayMenu}
+ */
+let getTrayMenu = () => global.menubar.menubar.tray;
+
+
+
+/**
+ * @typedef {Electron.Display} OverlayDisplay - Target display
+ */
+
+/**
+ * @typedef {Electron.Display.id} OverlayId - Unique identifier
+ */
+
+
+/**
+ * @class OverlayWindow
+ * @property {OverlayDisplay} overlayDisplay
+ * @property {OverlayId} overlayId
+ * @property {OverlayConfiguration} overlayConfiguration
  * @extends Electron.BrowserWindow
- * @class
+ * @namespace Electron
  */
 class OverlayWindow extends BrowserWindow {
+
+    /**
+     * @param {Electron.Display} display - Display
+     * @constructor
+     */
     constructor(display) {
         super({
-            show: false,
-            transparent: true,
             enableLargerThanScreen: true,
             frame: false,
-            focusable: false
+            focusable: false,
+            hasShadow: false,
+            height: 1,
+            show: false,
+            transparent: true,
+            width: 1,
+            x: 0,
+            y: 0
         });
+
+        // BrowserWindow
         this.setIgnoreMouseEvents(true);
 
-        // Add display reference to every overlay Window
-        this.display = display;
-        this.displayId = this.display.id;
+        if (isDebug) {
+            this.setAlwaysOnTop(false);
+        } else {
+            this.setAlwaysOnTop(true, 'screen-saver', 2);
+        }
 
-        // Set default icon
-        global.menubar.tray.setImage(appTrayIconTranslucent);
+        // Display assignment
+        this.overlayDisplay = display;
+        this.overlayId = display.id;
 
-        this.init(display);
+        // Initial configuration
+        this.overlayConfiguration = new OverlayConfiguration();
+
+        this.init();
     }
 
+    /**
+     * Init
+     */
     init() {
         logger.debug('init');
 
-        this.setColor('transparent');
-        this.setAlpha(0);
-        this.setFullscreen();
-        this.setForeground();
-        this.loadURL(windowUrl);
-
-        /** @listens Electron#BrowserWindow:closed */
-        this.on('closed', () => {
-            logger.debug('overlay:closed');
-        });
-
-        /** @listens Electron#WebContents:dom-ready */
+        /**
+         * @listens OverlayWindow.WebContents#dom-ready
+         */
         this.webContents.on('dom-ready', () => {
-            logger.debug('overlay:dom-ready');
+            logger.debug('OverlayWindow.WebContents#dom-ready');
+
+            // Apply configuration
+            this.applyConfiguration();
 
             this.show();
-
-            let isEnabled = electronSettings.get('isEnabled');
-            logger.debug('isEnabled', isEnabled);
-
-            if (isEnabled) {
-                this.enable();
-            } else {
-                this.disable();
-            }
-
-            this.restoreSettings();
         });
 
-        /** @listens Electron#BrowserWindow:update */
-        this.on('update', () => {
+        /**
+         * @listens OverlayWindow#dom-ready
+         */
+        this.on('update-overlay', () => {
             logger.debug('overlay:update');
 
-            let pristineOverlays = _.filter(global.overlays, function(overlay) {
-                return (overlay.alpha === 0);
-            });
+            const overlayManager = getOverlayManager();
+            const isVisible = overlayManager.isVisible();
 
-            if (pristineOverlays.length !== Object.keys(global.overlays).length) {
-                global.menubar.tray.setImage(appTrayIconDefault);
-            } else {
-                global.menubar.tray.setImage(appTrayIconTranslucent);
-            }
+            isVisible ? getTrayMenu().setImage(trayIconDefault) : getTrayMenu().setImage(trayIconTranslucent);
         });
+
+        this.loadURL(windowUrl);
     }
 
-    setFullscreen() {
-        logger.debug('setFullscreen');
+    /**
+     * @fires OverlayWindow#Event:update-overlay
+     */
+    updateRenderer() {
+        logger.debug('updateRenderer');
 
-        this.setBounds({
-            x: this.display.bounds.x,
-            y: this.display.bounds.y,
-            width: isDebug ? parseInt(this.display.bounds.width/4) : (this.display.bounds.width + 1),
-            height: isDebug ? parseInt(this.display.bounds.height/4) : (this.display.bounds.height + 1),
-        }, false);
+        this.emit('update-overlay', this.overlayId, this.overlayConfiguration);
+        this.webContents.send('update-overlay', this.overlayConfiguration);
     }
 
-    setHidden() {
-        logger.debug('setHidden');
+    /**
+     * applyAlpha
+     *
+     * @private
+     */
+    applyAlpha() {
+        logger.debug('applyAlpha');
 
-        this.setBounds({
-            x: 0,
-            y: 0,
-            width: 1,
-            height: 1
-        }, false);
-    }
-
-    setForeground() {
-        logger.debug('setForeground');
-
-        isDebug ? this.setAlwaysOnTop(false) : this.setAlwaysOnTop(true, 'screen-saver', 2);
-    }
-
-    setBackground() {
-        logger.debug('setBackground');
-
-        this.setAlwaysOnTop(false);
-    }
-
-    restoreSettings() {
-        logger.debug('restoreSettings');
-
-        let savedOverlays = electronSettings.get('overlays');
-        if (savedOverlays[this.displayId]) {
-            this.setAlpha(savedOverlays[this.displayId].alpha);
-            this.setColor(savedOverlays[this.displayId].color);
-        }
-    }
-
-    setAlpha(value) {
-        logger.debug('setAlpha');
-
-        let debounced = _.debounce(() => {
-            this.alpha = parseFloat(value);
-            this.webContents.send('overlay-update', this.id, 'alpha', value);
-            this.emit('update', this.id, 'alpha', value);
-        }, 150);
-
+        let debounced = _.debounce(() => this.updateRenderer(), 150);
         debounced();
     }
 
-    setColor(value) {
-        logger.debug('setColor');
+    /**
+     * applyColor
+     *
+     * @private
+     */
+    applyColor() {
+        logger.debug('applyColor');
 
-        this.color = value;
-        this.webContents.send('overlay-update', this.id, 'color', value);
-        this.emit('update', this.id, 'color', value);
+        let debounced = _.debounce(() => this.updateRenderer(), 150);
+        debounced();
     }
 
-    enable() {
-        logger.debug('enable');
+    /**
+     * applyVisibility
+     *
+     * @private
+     */
+    applyVisibility() {
+        logger.debug('applyVisibility');
 
-        this.setForeground();
-        this.setFullscreen();
+        const bounds = this.overlayDisplay.bounds;
+
+        if (this.overlayConfiguration.visibility) {
+            this.setBounds({
+                x: bounds.x,
+                y: bounds.y,
+                width: isDebug ? Math.floor(bounds.width / 4) : (bounds.width + 1),
+                height: isDebug ? Math.floor(bounds.height / 4) : (bounds.height + 1)
+            }, false);
+        } else {
+            this.setBounds({ x: 0, y: 0, width: 1, height: 1 }, false);
+        }
     }
 
-    disable() {
-        logger.debug('disable');
+    /**
+     * Apply configuration
+     *
+     * @private
+     */
+    applyConfiguration() {
+        logger.debug('applyConfiguration');
 
-        this.setHidden();
+        this.applyAlpha();
+        this.applyColor();
+        this.applyVisibility();
+    }
+
+    /**
+     * Set configuration
+     * @param {OverlayConfiguration|Object} configuration - Overlay configuration
+     *
+     * @public
+     */
+    setConfiguration(configuration) {
+        logger.debug('setConfiguration');
+
+        this.overlayConfiguration = Object.assign({}, this.overlayConfiguration, configuration);
+        this.applyConfiguration();
     }
 }
 

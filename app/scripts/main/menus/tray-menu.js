@@ -4,7 +4,6 @@
 /**
  * Modules
  * Node
- * @global
  * @constant
  */
 const path = require('path');
@@ -12,63 +11,70 @@ const path = require('path');
 /**
  * Modules
  * Electron
- * @global
  * @constant
  */
 const electron = require('electron');
-const { app, BrowserWindow, Menu } = electron;
+const { Menu } = electron || electron.remote;
+
+/**
+ * Modules
+ * Configuration
+ */
+const app = global.menubar.menubar.app;
 
 /**
  * Modules
  * External
- * @global
- * @const
+ * @constant
  */
-const appRootPath = require('app-root-path').path;
+const appRootPath = require('app-root-path')['path'];
 
 /**
  * Modules
  * Internal
- * @global
  * @constant
  */
-const logger = require(path.join(appRootPath, 'lib', 'logger'))({ write: true });
-const packageJson = require(path.join(appRootPath, 'package.json'));
+const logger = require('@sidneys/logger')({ write: true });
+const platformTools = require('@sidneys/platform-tools');
 
 
 /**
- * App
- * @global
+ * Application
  * @constant
  */
-const appProductName = packageJson.productName || packageJson.name;
-const appVersion = packageJson.version;
+const appCurrentVersion = global.manifest.version;
+const appProductName = global.manifest.productName;
 
 
 /**
- * @global
+ * Get controller window
+ * @return {Electron.BrowserWindow}
  */
-let tray = {};
-let trayMenu = {};
+let getControllerWindow = () => global.menubar.menubar.window;
+
+/**
+ * Get tray
+ * @return {Electron.Tray}
+ */
+let getTray = () => global.menubar.menubar.tray;
 
 
 /**
- * Tray Menu Template
- * @global
+ * Tray, Dock Menu Template
+ * @return {Electron.MenuItemConstructorOptions[]}
  */
-let getTrayMenuTemplate = () => {
+let createTrayMenuTemplate = () => {
     return [
         {
-            id: 'productName',
+            id: 'appProductName',
             label: `Show ${appProductName}`,
             click() {
-                let mainWindow = global.menubar.window || BrowserWindow.getAllWindows()[0];
-                mainWindow.show();
+                getControllerWindow().show();
             }
         },
         {
-            id: 'currentVersion',
-            label: `Version ${appVersion}`,
+            id: 'appCurrentVersion',
+            label: `v${appCurrentVersion}`,
             type: 'normal',
             enabled: false
         },
@@ -85,23 +91,74 @@ let getTrayMenuTemplate = () => {
 };
 
 /**
- *  Add Menu to Tray
+ * @class TrayMenu
+ * @property {Electron.MenuItemConstructorOptions[]} template - Template
+ * @property {Electron.Tray} tray - Tray
+ * @property {Electron.Menu} menu - Menu
  */
-let registerMenu = (appTray) => {
-    logger.debug('registerMenu');
+class TrayMenu {
+    /**
+     * @param {Electron.MenuItemConstructorOptions[]} template - Menu template
+     * @constructs
+     */
+    constructor(template) {
+        this.template = template;
+        this.tray = getTray();
+        this.menu = Menu.buildFromTemplate(this.template);
 
-    tray = appTray;
-    trayMenu = Menu.buildFromTemplate(getTrayMenuTemplate());
+        this.init();
+    }
 
-    tray.setContextMenu(trayMenu);
+    /**
+     * Init
+     */
+    init() {
+        logger.debug('init');
+
+        this.tray.setContextMenu(this.menu);
+
+        /**
+         * @listens Electron.Tray#click
+         */
+        this.tray.on('click', () => {
+            logger.debug('TrayMenu#click');
+
+            const controllerWindow = getControllerWindow();
+
+            if (!controllerWindow) { return; }
+
+            controllerWindow.isVisible() ? controllerWindow.hide() : controllerWindow.show();
+        });
+    }
+}
+
+
+/**
+ * Init
+ */
+let init = () => {
+    logger.debug('init');
+
+    // Ensure single instance
+    if (!global.trayMenu) {
+        global.trayMenu = new TrayMenu(createTrayMenuTemplate());
+    }
 };
+
+
+/**
+ * @listens Electron.App#Event:ready
+ */
+app.once('ready', () => {
+    logger.debug('app#ready');
+
+    if (!platformTools.isLinux) { return; }
+
+    init();
+});
 
 
 /**
  * @exports
  */
-module.exports = {
-    tray: tray,
-    menu: trayMenu,
-    registerMenu: registerMenu
-};
+module.exports = global.trayMenu;
