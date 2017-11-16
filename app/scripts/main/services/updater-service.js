@@ -15,13 +15,7 @@ const path = require('path');
  * @constant
  */
 const electron = require('electron');
-const { BrowserWindow } = electron || electron.remote;
-
-/**
- * Modules
- * Configuration
- */
-const app = global.menubar.menubar.app;
+const { app, BrowserWindow } = electron;
 
 /**
  * Modules
@@ -41,7 +35,7 @@ const { autoUpdater } = require('electron-updater');
  * @constant
  */
 const dialogProvider = require(path.join(appRootPath, 'app', 'scripts', 'main', 'providers', 'dialog-provider'));
-// const notificationProvider = require(path.join(appRootPath, 'app', 'scripts', 'main', 'providers', 'notification-provider'));
+//const notificationProvider = require(path.join(appRootPath, 'app', 'scripts', 'main', 'providers', 'notification-provider'));
 const configurationManager = require(path.join(appRootPath, 'app', 'scripts', 'main', 'managers', 'configuration-manager'));
 
 /**
@@ -61,26 +55,32 @@ let getMainWindow = () => global.mainWindow;
 
 
 /**
- * Retrieve AppChangelog
+ * Retrieve appAutoUpdate
+ * @return {Boolean} - Yes / no
+ */
+let retrieveAppAutoUpdate = () => configurationManager('appAutoUpdate').get();
+
+/**
+ * Retrieve appChangelog
  * @return {String} - changelog
  */
 let retrieveAppChangelog = () => configurationManager('appChangelog').get();
 
 /**
- * Store AppChangelog
+ * Store appChangelog
  * @param {String} changelog - Changelog
  * @return {void}
  */
 let storeAppChangelog = (changelog) => configurationManager('appChangelog').set(changelog);
 
 /**
- * Retrieve AppLastVersion
+ * Retrieve appLastVersion
  * @return {String} - Version
  */
 let retrieveAppLastVersion = () => configurationManager('appLastVersion').get();
 
 /**
- * Store AppLastVersion
+ * Store appLastVersion
  * @param {String} version - Version
  * @return {void}
  */
@@ -94,9 +94,11 @@ let storeAppLastVersion = (version) => configurationManager('appLastVersion').se
  */
 class UpdaterService {
     /**
-     * @constructs
+     * @constructor
      */
     constructor() {
+        logger.debug('constructor');
+
         // Do not run with debug Electron application
         if (process.defaultApp) { return; }
 
@@ -156,8 +158,8 @@ class UpdaterService {
 
             this.isUpdating = true;
 
-            // const notification = notificationProvider.create({ title: `Update available for ${appProductName}`, subtitle: info.version });
-            // notification.show();
+            //const notification = notificationProvider.create({ title: `Update available for ${appProductName}`, subtitle: info.version });
+            //notification.show();
         });
 
         /**
@@ -196,8 +198,8 @@ class UpdaterService {
 
             this.isUpdating = true;
 
-            // const notification = notificationProvider.create({ title: `Update ready to install for ${appProductName}`, subtitle: info.version });
-            // notification.show();
+            //const notification = notificationProvider.create({ title: `Update ready to install for ${appProductName}`, subtitle: info.version });
+            //notification.show();
 
             if (!!info.releaseNotes) {
                 const releaseNotesPlaintext = removeMarkdown(info.releaseNotes);
@@ -222,7 +224,7 @@ class UpdaterService {
                 });
         });
 
-        this.autoUpdater.checkForUpdates();
+        this.checkForUpdates();
     }
 
     /**
@@ -256,10 +258,43 @@ class UpdaterService {
                 dialogProvider.info(`${appProductName} has been updated to ${appCurrentVersion}`, `Update completed successfully.`);
             }
 
-            // const notification = notificationProvider.create({ title: `Update installed for ${appProductName}`, subtitle: appCurrentVersion });
-            // notification.show();
+            //const notification = notificationProvider.create({ title: `Update installed for ${appProductName}`, subtitle: appCurrentVersion });
+            //notification.show();
         }
+    }
 
+    /**
+     * Check if updater is ready
+     * @return {Boolean} - Yes / no
+     */
+    isAvailable() {
+        logger.debug('isAvailable');
+
+        return Boolean(this.autoUpdater);
+    }
+
+    /**
+     * Check if currently updating
+     * @return {Boolean} - Yes / no
+     */
+    isActive() {
+        logger.debug('isActive');
+
+        return Boolean(this.isUpdating);
+    }
+
+    /**
+     * Check for updates
+     */
+    checkForUpdates() {
+        logger.debug('checkForUpdates');
+
+        if (!this.isAvailable()) { return; }
+        if (this.isActive()) { return; }
+
+        if (!retrieveAppAutoUpdate()) { return; }
+
+        this.autoUpdater.checkForUpdates();
     }
 }
 
@@ -283,15 +318,9 @@ let init = () => {
 app.on('browser-window-focus', () => {
     logger.debug('app#browser-window-focus');
 
-    if (!global.updaterService) { init(); }
+    if (!global.updaterService) { return; }
 
-    if (!global.updaterService.autoUpdater) { return; }
-
-    if (Boolean(global.updaterService.isUpdating) === false) {
-        if (global.updaterService.autoUpdater.checkForUpdates) {
-            global.updaterService.autoUpdater.checkForUpdates();
-        }
-    }
+    global.updaterService.checkForUpdates();
 });
 
 /**

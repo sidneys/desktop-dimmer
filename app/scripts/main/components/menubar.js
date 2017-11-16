@@ -76,9 +76,11 @@ let handleThemeChange = (browserWindow) => {
  */
 class Menubar {
     /**
-     * @constructs
+     * @constructor
      */
     constructor() {
+        logger.debug('constructor');
+
         this.menubar = electronMenubar({
             alwaysOnTop: isDebug,
             backgroundColor: platformTools.isMacOS ? void 0 : '#404040',

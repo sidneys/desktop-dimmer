@@ -2,6 +2,14 @@
 
 
 /**
+ * Modules
+ * External
+ * @constant
+ */
+const logger = require('@sidneys/logger')({ write: true });
+
+
+/**
  * @typedef {String} OverlayAlpha - Floating-point alpha value
  * @example '0.23'
  */
@@ -53,6 +61,8 @@ class OverlayConfiguration {
      * @constructor
      */
     constructor(alpha = defaultAlpha, color = defaultColor, visibility = defaultVisibility) {
+        logger.debug('constructor');
+
         this.alpha = alpha;
         this.color = color;
         this.visibility = visibility;

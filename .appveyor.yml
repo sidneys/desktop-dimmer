@@ -38,7 +38,6 @@ deploy_script:
 
 artifacts:
   - path: build\output\*.exe
-  - path: build\output\*.yml
 
 notifications:
   - provider: Webhook

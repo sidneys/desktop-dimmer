@@ -6,7 +6,7 @@
  * Node
  * @constant
  */
-const EventEmitter = require('events');
+const events = require('events');
 const path = require('path');
 
 /**
@@ -19,19 +19,10 @@ const platformTools = require('@sidneys/platform-tools');
 
 /**
  * Modules
- * Electron
- * @constant
- */
-/* eslint-disable no-unused-vars */
-const menubar = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'components', 'menubar'));
-/* eslint-enable */
-
-/**
- * Modules
  * Configuration
  */
-EventEmitter.defaultMaxListeners = Infinity;
 appRootPath['setPath'](path.join(__dirname, '..', '..', '..', '..'));
+events.EventEmitter.defaultMaxListeners = Infinity;
 if (platformTools.isLinux) {
     process.env.XDG_CURRENT_DESKTOP = 'Unity';
 }
@@ -43,6 +34,7 @@ if (platformTools.isLinux) {
  */
 /* eslint-disable no-unused-vars */
 const globals = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'components', 'globals'));
+const menubar = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'components', 'menubar'));
 const updaterService = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'services', 'updater-service'));
 const debugService = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'services', 'debug-service'));
 const configurationManager = require(path.join(appRootPath['path'], 'app', 'scripts', 'main', 'managers', 'configuration-manager'));

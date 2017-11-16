@@ -64,6 +64,26 @@ electronSettings.setPath(appSettingsFilepath);
  */
 let configurationItems = {
     /**
+     * appAutoUpdate
+     */
+    appAutoUpdate: {
+        keypath: 'appAutoUpdate',
+        default: true,
+        init() {
+            logger.debug(this.keypath, 'init');
+        },
+        get() {
+            logger.debug(this.keypath, 'get');
+
+            return electronSettings.get(this.keypath);
+        },
+        set(value) {
+            logger.debug(this.keypath, 'set');
+
+            electronSettings.set(this.keypath, value);
+        }
+    },
+    /**
      * appChangelog
      */
     appChangelog: {
@@ -137,7 +157,6 @@ let configurationItems = {
     },
     /**
      * appLogFile
-     * @type {String}
      */
     appLogFile: {
         keypath: 'appLogFile',
@@ -158,7 +177,6 @@ let configurationItems = {
     },
     /**
      * overlayConfigurationDatabase
-     * @type {OverlayConfiguration[]}
      */
     overlayConfigurationDatabase: {
         keypath: 'overlayConfigurationDatabase',

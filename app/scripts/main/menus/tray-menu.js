@@ -99,9 +99,11 @@ let createTrayMenuTemplate = () => {
 class TrayMenu {
     /**
      * @param {Electron.MenuItemConstructorOptions[]} template - Menu template
-     * @constructs
+     * @constructor
      */
     constructor(template) {
+        logger.debug('constructor');
+
         this.template = template;
         this.tray = getTray();
         this.menu = Menu.buildFromTemplate(this.template);

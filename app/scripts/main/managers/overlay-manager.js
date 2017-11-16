@@ -73,6 +73,8 @@ class OverlayManager extends events.EventEmitter {
      * @constructor
      */
     constructor() {
+        logger.debug('constructor');
+
         super();
         this.init();
     }

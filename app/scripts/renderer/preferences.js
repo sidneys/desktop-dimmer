@@ -31,7 +31,6 @@ const logger = require('@sidneys/logger')({ write: true });
  * @constant
  */
 const configurationManager = remote.require(path.join(appRootPath, 'app', 'scripts', 'main', 'managers', 'configuration-manager'));
-const globals = remote.require(path.join(appRootPath, 'app', 'scripts', 'main', 'components', 'globals'));
 
 
 /**
@@ -63,7 +62,10 @@ let setVersion = (version) => versionTextElement.innerText = version.trim();
 let renderPreferences = () => {
     logger.debug('registerPreferences');
 
-    let preferenceKeyList = [ 'appLaunchOnStartup' ];
+    let preferenceKeyList = [
+        'appAutoUpdate',
+        'appLaunchOnStartup'
+    ];
 
     preferenceKeyList.forEach((keyName) => {
         const preferenceInputElement = document.createElement('input');

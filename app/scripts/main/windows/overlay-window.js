@@ -97,6 +97,8 @@ class OverlayWindow extends BrowserWindow {
      * @constructor
      */
     constructor(display) {
+        logger.debug('constructor');
+
         super({
             enableLargerThanScreen: true,
             frame: false,

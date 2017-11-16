@@ -1,4 +1,13 @@
 {
+  "4.0.4": {
+    "🍾 features": [
+      "Adds preference: application auto updates (#26)"
+    ],
+    "👷 internals": [
+      "Upgrades `node_modules`",
+      "Upgrades `services`"
+    ]
+  },
   "4.0.3": {
     "🍾 features": [
       "Per-display enabling and disabling of Desktop Dimmer",
