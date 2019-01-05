@@ -38,7 +38,7 @@ appRootPath.setPath(path.join(__dirname));
  * Internal
  * @constant
  */
-const logger = require(path.join(appRootPath.path, 'lib', 'logger'))({ write: true });
+const logger = require('@sidneys/logger')({ write: true });
 const packageJson = require(path.join(appRootPath.path, 'package.json'));
 
 
@@ -119,4 +119,3 @@ gulp.task('renderer:reload', (callback) => {
 
 
 gulp.task('default', ['livereload']);
-
