@@ -33,7 +33,7 @@ appRootPath.setPath(path.join(__dirname, '..'));
  * @constant
  */
 const packageJson = require(path.join(appRootPath.path, 'package.json'));
-const logger = require(path.join(appRootPath.path, 'lib', 'logger'))({ namespace: packageJson.productName, timestamp: false });
+const logger = require('@sidneys/logger')({ namespace: packageJson.productName, timestamp: false });
 
 /**
  * Filesystem

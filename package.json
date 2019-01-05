@@ -44,7 +44,7 @@
     "@sidneys/releasenotes": "^1.0.10",
     "app-root-path": "^2.0.1",
     "appdirectory": "^0.1.0",
-    "auto-launch": "git://github.com/sidneys/node-auto-launch.git#master",
+    "auto-launch": "^5.0.1",
     "babel-cli": "^6.26.0",
     "babel-preset-electron": "^1.4.15",
     "chalk": "^2.3.0",
