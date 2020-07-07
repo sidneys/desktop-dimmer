@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "docdash": "^0.4.0",
-    "electron": "1.4.15",
+    "electron": "7.2.4",
     "electron-builder": "19.45.4",
     "electron-connect": "^0.6.2",
     "electron-prebuilt-compile": "1.4.15",
